@@ -1,0 +1,62 @@
+[project]
+name = "motion_stack_core"
+version = "0.0.1"
+description = "TODO"
+readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Elian NEPPEL", email = "elian.dev@posteo.com" }
+]
+requires-python = ">=3.10,<3.15"
+keywords = ["asyncio", "robotics"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Topic :: Scientific/Engineering",
+  "Topic :: System :: Networking",
+  "Framework :: AsyncIO",
+]
+
+dependencies = [
+"asyncio_for_robotics>=1.3,<1.4",
+"numpy>1.20",
+"nptyping",
+"xacro",
+"numpy-quaternion",
+"scipy",
+"spatialmath-python",
+"roboticstoolbox-python",
+"gogo_keyboard",
+"urwid",
+]
+
+[build-system]
+requires = ["setuptools >= 58.2.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["motion_stack_core", "motion_stack_core.*"]
+
+[project.optional-dependencies]
+
+[project.urls]
+Homepage = "https://github.com/2lian/asyncio-gazebo"
+Repository = "https://github.com/2lian/asyncio-gazebo"
+Issues = "https://github.com/2lian/asyncio-gazebo/issues"
+
+[tool.setuptools.package-data]
+"motion_stack_core" = ["py.typed"]
+

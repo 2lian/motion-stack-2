@@ -1,0 +1,14 @@
+[workspace]
+authors = ["Neppel Elian <elian.neppel@posteo.eu>"]
+channels = ["conda-forge"]
+name = "motion-stack-2"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[pypi-dependencies]
+motion_stack_core = {path = "./src/motion_stack_core/", editable=true}
+
+[dependencies]
+python = ">=3.14.3,<3.15"

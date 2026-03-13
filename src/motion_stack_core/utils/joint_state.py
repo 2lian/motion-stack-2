@@ -1,0 +1,321 @@
+import asyncio
+from copy import deepcopy
+import logging
+from dataclasses import dataclass, replace
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Final,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    overload,
+)
+
+from .time import Time
+
+logger = logging.getLogger(__name__)
+
+Jstamp = Literal["name", "time"]
+jstamp: Set[Jstamp] = {"name", "time"}
+Jdata = Literal["position", "velocity", "effort"]
+jdata: Set[Jdata] = {"position", "velocity", "effort"}
+jattr = jdata | jstamp
+
+
+@dataclass(eq=True, order=True)
+class JState:
+    """Data of one joint
+
+    Attributes:
+        name:
+        time: time of the measurement or command
+        position: rad (can go above +-pi)
+        velocity: rad/s
+        effort: N.m
+    """
+
+    name: str
+    time: Optional[Time] = None
+    position: Optional[float] = None
+    velocity: Optional[float] = None
+    effort: Optional[float] = None
+
+    @overload
+    def getattr(self, name: Literal["name"]) -> str: ...
+
+    @overload
+    def getattr(self, name: Literal["time"]) -> Time: ...
+
+    @overload
+    def getattr(self, name: Jdata) -> float: ...
+
+    def getattr(self, name: str) -> Any:
+        return getattr(self, name, None)
+
+    def copy(self) -> "JState":
+        return replace(self)
+
+    @property
+    def is_initialized(self) -> bool:
+        for attr in jdata:
+            val = self.getattr(attr)
+            if val is not None:
+                return True
+        return False
+
+
+MultiJState = Union[Dict[str, JState], List[JState], JState]
+
+def subdict(d: dict, keys: set):
+    return {k: d[k] for k in d.keys() & keys}
+
+def multi_to_js_dict(states: MultiJState) -> Dict[str, JState]:
+    if isinstance(states, list):
+        buf = {}
+        for js in states:
+            prev = buf.get(js.name)
+            if prev is None:
+                buf[js.name] = js
+                continue
+            if prev.time < js.time:
+                buf[js.name] = impose_state(prev, js)
+        return buf
+    elif isinstance(states, dict):
+        return states
+    else:
+        return {states.name: states}
+
+
+def js_from_dict_list(dil: Dict[Union[Jdata, Jstamp], List]) -> List[JState]:
+    """Converts a dictionary of lists into a list of JState"""
+    lengths = {len(v) for k, v in dil.items() if k in jattr} - {0}
+    assert len(lengths) <= 1, f"non-empty lists are of different lengths {lengths}"
+
+    names = dil.get("name")
+    if names is None:
+        return []
+    out: List[JState] = [JState(n) for n in names]
+
+    for i, state in enumerate(out):
+        for attr in jdata | (jstamp - {"name"}):
+            value: Union[None, List] = dil.get(attr)
+            if not value:
+                continue
+            state.__setattr__(attr, value[i])
+    return out
+
+
+def impose_state(onto: Optional[JState], fromm: Optional[JState]) -> JState:
+    """Replaces values of onto with values fromm, unless from is None."""
+    if onto is None and fromm is None:
+        return JState(name="")
+    if onto is None:
+        return fromm.copy()
+    if fromm is None:
+        return onto.copy()
+
+    out = onto.copy()
+    for attr in jattr:
+        v2 = fromm.getattr(attr)
+        if v2 is not None:
+            out.__setattr__(attr, v2)
+    return out
+
+
+def js_changed(j1: JState, j2: JState, delta: JState) -> bool:
+    """checks if the difference is above delta on each field except name"""
+    d = js_diff(j1, j2)
+    for attr in jattr - {"name"}:
+        vd = getattr(d, attr, None)
+        vdelta = getattr(delta, attr, None)
+        if vdelta is None:
+            continue
+        if vd is None:
+            return True
+
+        if abs(vd) >= abs(vdelta):
+            return True
+    return False
+
+
+def js_diff(j1: JState, j2: JState) -> JState:
+    """Difference between two JS"""
+    assert j1.name == j2.name
+    out = JState(j1.name)
+    for attr in jattr - {"name"}:
+        v1 = getattr(j1, attr, None)
+        v2 = getattr(j2, attr, None)
+        if v1 is None and v2 is None:
+            if attr == "time":
+                setattr(out, attr, 0)
+            else:
+                setattr(out, attr, 0.0)
+        elif v1 is None or v2 is None:
+            setattr(out, attr, None)
+        else:
+            assert not (v1 is None or v2 is None)
+            setattr(out, attr, v1 - v2)
+    return out
+
+
+class JStateBuffer:
+    def __init__(self, delta: JState) -> None:
+        """Accumulate joint measurements, only passing through data that
+        changed by more than delta.
+
+        Also skips data that is in the past of a previous data.
+
+        Args:
+            delta: Changes since last pull that should mark the joint as urgent.
+        """
+        #: can be changed at runtime
+        self.delta: JState = delta
+        if self.delta.time is None:
+            self.delta.time = Time(0)
+        #: last pulled data
+        self.last_sent: Dict[str, JState] = dict()
+        #: all data accumulated since start
+        self.accumulated: Dict[str, JState] = dict()
+        self._new: Dict[str, JState] = dict()
+
+    @staticmethod
+    def _accumulate(states: Dict[str, JState], onto: Dict[str, JState]):
+        """accumulates data since the beggining and replaces None with data"""
+        for name, js in states.items():
+            onto[name] = impose_state(onto.get(name), js)
+
+    def push(self, states: MultiJState):
+        """Pushes data into the buffer"""
+        states = multi_to_js_dict(states)
+        if len(states) == 0:
+            return
+        not_old = {}
+        for k, js in states.items():
+            if js.time is None or js.time == 0:
+                not_old[k] = js
+                continue
+            acc = self.accumulated.get(k)
+            if acc is None:
+                not_old[k] = js
+                continue
+            if acc.time is None or acc.time == 0:
+                not_old[k] = js
+                continue
+            if acc.time <= js.time:
+                not_old[k] = js
+        if logger.isEnabledFor(logging.DEBUG):
+            never_seen = set(not_old.keys()) - set(self.accumulated.keys())
+            if never_seen:
+                logger.debug(f"new data buffered: %s", never_seen)
+            # else:
+            # logger.debug(f"Updating buffered: %s", set(not_old.keys()))
+
+        self._new.update(not_old)
+        self._accumulate(not_old, self.accumulated)
+
+    @staticmethod
+    def _find_urgent(
+        last_sent: Dict[str, JState], new: Dict[str, JState], delta: JState
+    ) -> Dict[str, JState]:
+        urgent = dict()
+        for name, js in new.items():
+            last = last_sent.get(name)
+            if last is None:
+                urgent[name] = js
+                continue
+            if last.time is None:
+                has_changed = True
+            elif js.time is None:
+                has_changed = True
+            elif last.time == 0 or delta.time.nano < 1:
+                has_changed = True
+            elif last.time > js.time:
+                has_changed = False
+            else:
+                has_changed = js_changed(last, js, delta)
+            if has_changed:
+                urgent[name] = js
+        return urgent
+    
+    def marked_new(self, delta=None) -> Dict[str, JState]:
+        return self._new
+    
+    def marked_urgent(self, delta=None) -> Dict[str, JState]:
+        if delta is None:
+            delta = self.delta
+        return self._find_urgent(self.last_sent, self._new, delta)
+
+    def pull_urgent(self, delta=None) -> Dict[str, JState]:
+        """Returns and flushes the urgent buffer of data that changed (by more
+        than delta).
+        """
+        urgent = self.marked_urgent()
+        if len(urgent) <= 0:
+            return dict()
+        for k in urgent.keys():
+            del self._new[k]
+        self.last_sent.update(urgent)
+        logger.debug("pulling urgent: %s", urgent.keys())
+        return urgent
+
+    def pull_new(self) -> Dict[str, JState]:
+        """Returns and flushes all new data"""
+        if len(self._new) <= 0:
+            logger.debug(f"Nothing new to pull")
+            return dict()
+        new = self._new
+        self._new = dict()
+        self.last_sent.update(new)
+        logger.debug(f"Pulled new: %s", new.keys())
+        return new
+
+
+class BatchedAsyncioBuffer:
+    def __init__(
+        self,
+        buffer: JStateBuffer,
+        callback: Callable[[Dict[str, JState]], Any],
+        batch_time: Optional[float] = 0.001,
+    ) -> None:
+        self.buffer: JStateBuffer = buffer
+        if batch_time is None:
+            batch_time = 0.001
+        self.batch_time: float = batch_time
+        self.callback: Callable[[Dict[str, JState]], Any] = callback
+        self._flush_scheduled = False
+
+    def background_flush(self):
+        js_data = self.buffer.pull_new()
+        self._flush_scheduled = False
+        logger.debug(f"Background batch flush: %s ", set(js_data.keys()))
+        self.callback(js_data)
+
+    def flush(self):
+        js_data = self.buffer.pull_urgent()
+        self._flush_scheduled = False
+        logger.debug(f"Urgent batch flush: %s ", set(js_data.keys()))
+        self.callback(js_data)
+
+    def input(self, js: MultiJState):
+        js = multi_to_js_dict(js)
+        b = self.buffer
+        b.push(js)
+        if self._flush_scheduled:
+            return
+        is_urgent = b._find_urgent(b.last_sent, b._new, b.delta)
+        if len(is_urgent) > 0:
+            logger.debug(f"Urgent scheduled by: %s ", set(is_urgent.keys()))
+            if self.batch_time > 0:
+                asyncio.get_event_loop().call_later(self.batch_time, self.flush)
+            elif self.batch_time < 0:
+                self.flush()
+            else:
+                asyncio.get_event_loop().call_soon(self.flush)
+            self._flush_scheduled = True
