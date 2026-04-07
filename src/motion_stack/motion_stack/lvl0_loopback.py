@@ -42,7 +42,7 @@ class LoopBack:
             self.states.push(msg)
 
     async def _send_back(self):
-        rate = afor.Rate(50)
+        rate = afor.Rate(60)
         try:
             async for t_ns in rate.listen():
                 js = deepcopy(self.states.accumulated)

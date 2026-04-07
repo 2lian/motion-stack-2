@@ -42,6 +42,7 @@ dependencies = [
 "dacite",
 "colorama",
 "ujson",
+"rerun-sdk",
 ]
 
 [build-system]

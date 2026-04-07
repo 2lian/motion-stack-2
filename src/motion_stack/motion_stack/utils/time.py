@@ -35,6 +35,12 @@ class Time:
     def sec(self) -> float:
         return self.nano / NANOSEC
 
+    def to_parts(self):
+        sec = int(self.nano)//int(1e9)
+        nano = int(self.nano)%int(1e9)
+        return sec, nano
+
+
     # --- arithmetic ---
 
     def __add__(self, other: Union["Time", int]) -> "Time":

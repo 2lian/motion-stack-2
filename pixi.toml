@@ -6,19 +6,51 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
+router = "RUST_LOG=debug zenohd -c ./router.json5"
 
-[pypi-dependencies]
+[feature.pyproject.pypi-dependencies]
 motion_stack = {path = "./src/motion_stack/", editable=true}
 ms_moonbot_zero = {path = "./src/ms_moonbot_zero/", editable=true}
+ms_pyzeros_bridge = {path = "./src/ms_pyzeros_bridge/", editable=true}
+pyzeros = {path = "./../pyzeros2/", editable=false}
+# pyzeros = {git = "ssh://git@github.com/ssf-thku/OmniLRS-artefacts.git", rev="1c6cae781d614d6264466cd4f33057e5a5caf13f"}
 
-[dependencies]
-python = ">=3.14.3,<3.15"
+[feature.pyproject.dependencies]
+zenohd="*"
+python = "3.13.*"
 uv = "*"
 pyright = "*"
 isort = "*"
 black = "*"
 glow-md = "*"
-pytest = ">=9.0.2,<10"
-mypy = ">=1.19.1,<2"
-pytest-asyncio = ">=1.3.0,<2"
-rerun-sdk = ">=0.31.1,<0.32"
+pytest = "*"
+mypy = "*"
+pytest-asyncio = "*"
+rerun-sdk = "*"
+
+[environments]
+default = { features = ["pyproject"] }
+ros = { features = ["jazzy"] }
+
+
+### ROS 2 Jazzy ####
+# isolated. For asserting interop with normal ROS 2
+[feature.jazzy]
+channels = ["https://prefix.dev/robostack-jazzy"]
+
+[feature.jazzy.dependencies]
+python="*"
+lark-parser = ">=0.12.0,<0.13"
+ros-jazzy-ros-core = ">=0.11.0,<0.12"
+ros-jazzy-ros2cli = ">=0.32.8,<0.33"
+ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
+
+### Env variables ###
+[activation.env]
+RMW_IMPLEMENTATION="rmw_zenoh_cpp"
+ROS_DOMAIN_ID="0"
+ROS_AUTOMATIC_DISCOVERY_RANGE="LOCALHOST"
+ZENOH_ROUTER_CONFIG_URI="./router.json5"
+ZENOH_SESSION_CONFIG_URI="./client.json5"
+ROS_LOCALHOST_ONLY=""
+PYTHON_GIL="1"
