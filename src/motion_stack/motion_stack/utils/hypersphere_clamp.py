@@ -12,7 +12,7 @@ import numpy as np
 import quaternion as qt
 from nptyping import NDArray, Shape
 
-from motion_stack.core.utils.pose import XyzQuat
+from motion_stack.utils.pose import XyzQuat
 
 from .math import Flo3, Flo4, Quaternion, qt_normalize
 

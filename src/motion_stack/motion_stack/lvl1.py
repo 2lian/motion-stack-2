@@ -17,6 +17,7 @@ from typing import (
     Tuple,
     Union,
 )
+import warnings
 
 import asyncio_for_robotics as afor
 import dacite
@@ -26,8 +27,7 @@ from asyncio_for_robotics.core.sub import BaseSub
 from colorama import Fore, Style
 from roboticstoolbox.tools.urdf.urdf import Joint as RTBJoint
 
-from ..api.injection.remapper import StateRemapper
-from .utils import joint_mapper, static_executor
+from .utils.joint_mapper import StateRemapper, position_clamp
 from .utils.joint_state import JState, JStateBuffer, subdict
 from .utils.printing import list_cyanize
 from .utils.robot_parsing import get_limit, load_set_urdf_raw, make_ee
@@ -473,6 +473,7 @@ class JointCore:
 
     @property
     def sensor_output(self) -> BaseSub[JStateBatch]:
+        warnings.warn("Use `joint_read_output` not `sensor_output`")
         return self.sensor_pipeline.output_sub
 
     def create_command_pipelines(self):
@@ -490,9 +491,10 @@ class JointCore:
 
     async def command_postproc(self, jsb: JStateBatch) -> JStateBatch:
         jsb = jsb.copy()
-        jsb = joint_mapper.position_clamp(jsb, self.limits)
+        jsb = position_clamp(jsb, self.limits)
         return self.lvl0_remap.map(jsb)
 
     @property
     def command_output(self) -> BaseSub[JStateBatch]:
+        warnings.warn("Use `motor_output` not `command_output`")
         return self.command_pipeline.output_sub

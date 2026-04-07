@@ -20,13 +20,12 @@ Authors:
 
 """
 
-import matplotlib
 import numpy as np
-import scipy
+# import matplotlib
+# import scipy
 
-matplotlib.use("Agg")  # fix for when there is no display
-__version__ = "0.0.1"
-scipy.randn = np.random
+# matplotlib.use("Agg")  # fix for when there is no display
+# scipy.randn = np.random
 
 try:
     from .rtb_fix.patch import patch

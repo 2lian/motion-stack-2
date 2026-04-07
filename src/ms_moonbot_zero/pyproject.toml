@@ -1,0 +1,33 @@
+[project]
+name = "ms_moonbot_zero"
+version = "0.0.1"
+description = "TODO"
+readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Elian NEPPEL", email = "elian.dev@posteo.com" }
+]
+requires-python = ">=3.10,<3.15"
+
+dependencies = [
+"motion_stack",
+"jinja2",
+]
+
+[build-system]
+requires = ["setuptools >= 58.2.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ms_moonbot_zero", "ms_moonbot_zero.*"]
+
+[tool.setuptools.package-data]
+"ms_moonbot_zero" = [
+  "py.typed",
+  "assets/moonbot_zero.jinja.urdf",
+  "assets/meshes/*.STL",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

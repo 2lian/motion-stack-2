@@ -1,0 +1,6 @@
+{
+"pythonPath": ".pixi/envs/default/bin/python",
+"extraPaths": ["./src/motion_stack/", "./src/ms_moonbot_zero/"]
+}
+
+

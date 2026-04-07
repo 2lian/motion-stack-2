@@ -1,0 +1,64 @@
+[34mD[0m| [34mNothing new to pull[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mNothing new to pull[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mNothing new to pull[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'j1'}[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mPulled new: dict_keys(['j1'])[0m
+[34mD[0m| [34mnew data buffered: {'joint3'}[0m
+[34mD[0m| [34mnew data buffered: {'joint1'}[0m
+[34mD[0m| [34mnew data buffered: {'joint0'}[0m
+[34mD[0m| [34mnew data buffered: {'joint2'}[0m
+[34mD[0m| [34mnew data buffered: {'joint5'}[0m
+[34mD[0m| [34mnew data buffered: {'joint9'}[0m
+[34mD[0m| [34mnew data buffered: {'joint4'}[0m
+[34mD[0m| [34mnew data buffered: {'joint6'}[0m
+[34mD[0m| [34mnew data buffered: {'joint8'}[0m
+[34mD[0m| [34mnew data buffered: {'joint7'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['joint3', 'joint1', 'joint0', 'joint2', 'joint5', 'joint9', 'joint4', 'joint6', 'joint8', 'joint7'])[0m
+[34mD[0m| [34mNothing new to pull[0m
+[34mD[0m| [34mnew data buffered: {'j1', 'j2'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1', 'j2'])[0m
+[34mD[0m| [34mnew data buffered: {'j2'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j2'])[0m
+[34mD[0m| [34mnew data buffered: {'j1', 'j2'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['j1', 'j2'])[0m
+[34mD[0m| [34mnew data buffered: {'joint3_2', 'joint2_2', 'joint2_3', 'joint2_1', 'joint3_3', 'joint4_3', 'joint3_1', 'joint1_1', 'joint4_1', 'joint4_2', 'joint1_3', 'joint1_2'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['joint2_2', 'joint2_3', 'joint1_3', 'joint2_1', 'joint3_3', 'joint4_3', 'joint3_1', 'joint1_1', 'joint4_1', 'joint4_2', 'joint3_2', 'joint1_2'])[0m
+[34mD[0m| [34mnew data buffered: {'joint1_1', 'joint1_3', 'joint1_2'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['joint1_1', 'joint1_3', 'joint1_2'])[0m
+[34mD[0m| [34mnew data buffered: {'joint1_1', 'joint1_3', 'joint1_2'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['joint1_1', 'joint1_3', 'joint1_2'])[0m
+[34mD[0m| [34mnew data buffered: {'c', 'a', 'b'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['a', 'b', 'c'])[0m
+[34mD[0m| [34mNothing new to pull[0m
+[34mD[0m| [34mNothing new to pull[0m
+[34mD[0m| [34mnew data buffered: {'a'}[0m
+[34mD[0m| [34mnew data buffered: {'b'}[0m
+[34mD[0m| [34mnew data buffered: {'c'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['a', 'b', 'c'])[0m
+[34mD[0m| [34mnew data buffered: {'c', 'a', 'b'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['a', 'b', 'c'])[0m
+[34mD[0m| [34mPulled new: dict_keys(['a'])[0m
+[34mD[0m| [34mnew data buffered: {'a_pre'}[0m
+[34mD[0m| [34mpulling urgent: dict_keys(['a_pre'])[0m
