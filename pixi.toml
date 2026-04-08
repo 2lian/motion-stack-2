@@ -19,7 +19,7 @@ pyzeros = {path = "./../pyzeros2/", editable=false}
 zenohd="*"
 python = "3.13.*"
 uv = "*"
-pyright = "*"
+# pyright = "*"
 isort = "*"
 black = "*"
 glow-md = "*"
@@ -27,6 +27,7 @@ pytest = "*"
 mypy = "*"
 pytest-asyncio = "*"
 rerun-sdk = "*"
+nvim = ">=0.11.0,<0.12"
 
 [environments]
 default = { features = ["pyproject"] }
@@ -54,3 +55,5 @@ ZENOH_ROUTER_CONFIG_URI="./router.json5"
 ZENOH_SESSION_CONFIG_URI="./client.json5"
 ROS_LOCALHOST_ONLY=""
 PYTHON_GIL="1"
+
+[dependencies]

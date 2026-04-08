@@ -1,33 +1,18 @@
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from colorama import Fore
 
 
-class TCOL:
-    """Colors for  the terminal"""
-
-    HEADER = """\033[95m"""  # ]
-    OKBLUE = """\033[94m"""  # ]
-    OKCYAN = """\033[96m"""  # ]
-    OKGREEN = """\033[92m"""  # ]
-    WARNING = """\x1b[33;20m"""  # ]
-    FAIL = """\033[91m"""  # ]
-    ENDC = """\033[0m"""  # ]
-    BOLD = """\033[1m"""  # ]
-    UNDERLINE = """\033[4m"""  # ]
-
-def list_cyanize(l: Iterable, default_color: Optional[str] = None) -> str:
+def list_cyanize(l: Iterable[Any]) -> str:
     """Makes each element of a list cyan.
 
     Args:
         l: Iterable
-        default_color: color to go back to outise of the cyan
 
     Returns:
 
     """
-    if default_color is None:
-        default_color = TCOL.ENDC
     out = "["
     first = True
     for k in l:
@@ -40,5 +25,3 @@ def list_cyanize(l: Iterable, default_color: Optional[str] = None) -> str:
             out += f"{Fore.CYAN}{k}{Fore.RESET}"
     out += "]"
     return out
-
-

@@ -1,19 +1,10 @@
 import asyncio
-import time
-from dataclasses import replace
 from pathlib import Path
 
 import asyncio_for_robotics as afor
 import pytest
-from asyncio_for_robotics.core._logger import setup_logger
-from asyncio_for_robotics.core.sub import BaseSub
 
-from motion_stack.lvl1_rework import (
-    JointCore,
-    JointPipeline,
-    JStateBatch,
-    Lvl1Param,
-)
+from motion_stack.lvl1.core import JointCore, JointPipeline, JStateBatch, Lvl1Param
 from motion_stack.utils.joint_state import JState
 from motion_stack.utils.time import Time
 
@@ -22,9 +13,7 @@ HERE = Path(__file__).resolve().parent
 
 @pytest.fixture
 async def lvl1():
-    sensor_sub = BaseSub()
-    command_sub = BaseSub()
-    lvl1 = JointCore(sensor_sub, command_sub, Lvl1Param(add_joint=["j1", "j2"]))
+    lvl1 = JointCore(Lvl1Param(add_joint=["j1", "j2"]))
     async with asyncio.TaskGroup() as tg:
         task = tg.create_task(lvl1.run())
         yield lvl1
@@ -39,9 +28,7 @@ def mzero_urdf():
 
 @pytest.fixture
 async def lvl1_mzero_all(mzero_urdf: str):
-    sensor_sub = BaseSub()
-    command_sub = BaseSub()
-    lvl1 = JointCore(sensor_sub, command_sub, Lvl1Param(urdf=mzero_urdf))
+    lvl1 = JointCore(Lvl1Param(urdf=mzero_urdf))
     async with asyncio.TaskGroup() as tg:
         task = tg.create_task(lvl1.run())
         yield lvl1
@@ -50,11 +37,7 @@ async def lvl1_mzero_all(mzero_urdf: str):
 
 @pytest.fixture
 async def lvl1_mzero_end1(mzero_urdf: str):
-    sensor_sub = BaseSub()
-    command_sub = BaseSub()
-    lvl1 = JointCore(
-        sensor_sub, command_sub, Lvl1Param(urdf=mzero_urdf, end_effector_name="end1")
-    )
+    lvl1 = JointCore(Lvl1Param(urdf=mzero_urdf, end_effector_name="end1"))
     async with asyncio.TaskGroup() as tg:
         task = tg.create_task(lvl1.run())
         yield lvl1
@@ -63,11 +46,7 @@ async def lvl1_mzero_end1(mzero_urdf: str):
 
 @pytest.fixture
 async def lvl1_mzero_1(mzero_urdf: str):
-    sensor_sub = BaseSub()
-    command_sub = BaseSub()
-    lvl1 = JointCore(
-        sensor_sub, command_sub, Lvl1Param(urdf=mzero_urdf, end_effector_name=1)
-    )
+    lvl1 = JointCore(Lvl1Param(urdf=mzero_urdf, end_effector_name=1))
     async with asyncio.TaskGroup() as tg:
         task = tg.create_task(lvl1.run())
         yield lvl1

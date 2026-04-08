@@ -7,9 +7,9 @@ from asyncio_for_robotics import BaseSub
 import rerun as rr
 import rerun.urdf as rr_urdf
 
-from .lvl1 import JStateBatch, JointCore
-from .utils.joint_state import JState
-from .utils.time import Time
+from .core import JStateBatch, JointCore
+from ..utils.joint_state import JState
+from ..utils.time import Time
 
 class Lvl1RerunHook:
     def __init__(
@@ -142,7 +142,7 @@ class Lvl1RerunHook:
         return str(value)
 
     def _any(self, value):
-        return value # works fine
+        # return value # works fine
         if value is None:
             return "null"
         if isinstance(value, list):

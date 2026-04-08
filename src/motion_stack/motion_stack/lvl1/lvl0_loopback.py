@@ -10,7 +10,7 @@ from asyncio_for_robotics import BaseSub
 from motion_stack.utils.joint_state import JState, JStateBuffer
 from motion_stack.utils.time import Time
 
-from .lvl1 import JointCore, JStateBatch
+from .core import JointCore, JStateBatch
 
 
 class LoopBack:
@@ -46,10 +46,11 @@ class LoopBack:
         try:
             async for t_ns in rate.listen():
                 js = deepcopy(self.states.accumulated)
+                stamp = Time.from_parts(nano=time.time_ns())
                 for name, j in js.items():
-                    j.time = Time.from_parts(nano=time.time_ns())
+                    j.time = stamp
                     if j.position is None:
                         j.position = 0
-                self.lvl1_input.input_data(js)
+                self.lvl1_input._input_data_asyncio(js)
         finally:
             rate.close()

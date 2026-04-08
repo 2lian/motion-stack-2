@@ -1,23 +1,11 @@
 import asyncio
 import dataclasses
 import logging
-from pprint import pprint
 import time
-from dataclasses import asdict, dataclass
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Final,
-    List,
-    Optional,
-    OrderedDict,
-    Self,
-    Set,
-    Tuple,
-    Union,
-)
 import warnings
+from dataclasses import asdict, dataclass
+from pprint import pprint
+from typing import Any, Callable, Final, Self, TypeAlias
 
 import asyncio_for_robotics as afor
 import dacite
@@ -27,22 +15,21 @@ from asyncio_for_robotics.core.sub import BaseSub
 from colorama import Fore, Style
 from roboticstoolbox.tools.urdf.urdf import Joint as RTBJoint
 
-from .utils.joint_mapper import StateRemapper, position_clamp
-from .utils.joint_state import JState, JStateBuffer, subdict
-from .utils.printing import list_cyanize
-from .utils.robot_parsing import get_limit, load_set_urdf_raw, make_ee
-from .utils.static_executor import default_param_dict
-from .utils.time import Time
+from ..utils.joint_mapper import StateRemapper, position_clamp
+from ..utils.joint_state import JState, JStateBuffer, subdict
+from ..utils.printing import list_cyanize
+from ..utils.robot_parsing import get_limit, load_set_urdf_raw, make_ee
+from ..utils.time import Time
 
-JStateBatch = Dict[str, JState]
+JStateBatch: TypeAlias = dict[str, JState]
 
 
 @dataclass
 class Lvl1Param:
     urdf: str = ""
     namespace: str = "ms"
-    end_effector_name: Union[None, str, int] = "ALL"
-    start_effector_name: Union[None, str] = None
+    end_effector_name: None | str | int = "ALL"
+    start_effector_name: None | str = None
     mvmt_update_rate: float = 100
     joint_buffer: JState = dataclasses.field(
         default_factory=lambda *_: JState(
@@ -53,7 +40,7 @@ class Lvl1Param:
             effort=np.deg2rad(0.001),
         )
     )
-    add_joint: List[str] = dataclasses.field(default_factory=lambda *_: [])
+    add_joint: list[str] = dataclasses.field(default_factory=lambda *_: [])
     ignore_limits: bool = False
     limit_margin: float = 0
     batch_time: float = 0.001
@@ -72,12 +59,13 @@ class Lvl1Param:
 
 lvl1_default: Final[Lvl1Param] = Lvl1Param()
 
+
 @dataclass
 class Lvl1Info:
-    joints: List[str] = dataclasses.field(default_factory=lambda *_: [])
+    joints: list[str] = dataclasses.field(default_factory=lambda *_: [])
     namespace: str = "ms"
-    end_effector_name: Union[None, str, int] = "ALL"
-    start_effector_name: Union[None, str] = None
+    end_effector_name: None | str | int = "ALL"
+    start_effector_name: None | str = None
     mvmt_update_rate: float = 100
     joint_buffer: JState = dataclasses.field(
         default_factory=lambda *_: JState(
@@ -88,7 +76,7 @@ class Lvl1Info:
             effort=np.deg2rad(0.001),
         )
     )
-    add_joint: List[str] = dataclasses.field(default_factory=lambda *_: [])
+    add_joint: list[str] = dataclasses.field(default_factory=lambda *_: [])
     ignore_limits: bool = False
     limit_margin: float = 0
     batch_time: float = 0.001
@@ -272,23 +260,21 @@ class JointPipeline:
 class JointCore:
     def __init__(
         self,
-        sensor_sub: BaseSub[JStateBatch],
-        command_sub: BaseSub[JStateBatch],
         params: Lvl1Param = lvl1_default,
     ) -> None:
         self.PARAMS: Lvl1Param = params
-        self.sensor_sub: BaseSub[JStateBatch] = sensor_sub
-        self.command_sub: BaseSub[JStateBatch] = command_sub
+        self.sensor_sub: BaseSub[JStateBatch] = BaseSub()
+        self.command_sub: BaseSub[JStateBatch] = BaseSub()
         self.continuous_js_output: BaseSub[JStateBatch] = BaseSub()
         self.sensor_pipeline: JointPipeline
         self.command_pipeline: JointPipeline
-        self.joints_objects: List[RTBJoint]
-        self.limits: Dict[str, Tuple[float, float]] = dict()  # needs improvement
+        self.joints_objects: list[RTBJoint]
+        self.limits: dict[str, tuple[float, float]] = dict()  # needs improvement
         self.joints_objects, _, _, _ = self.setup_urdf()
-        self.joints_of_interest: Set[str] = {k.name for k in self.joints_objects}
+        self.joints_of_interest: set[str] = {k.name for k in self.joints_objects}
 
-        self.lvl0_remap = StateRemapper()  # empty
-        self.lvl2_remap = StateRemapper()  # empty
+        self.lvl0_remap = StateRemapper()  # empty, to be updated by user
+        self.lvl2_remap = StateRemapper()  # empty, to be updated by user
         self.create_sensor_pipelines()
         self.create_command_pipelines()
 
@@ -399,11 +385,11 @@ class JointCore:
 
     def setup_urdf(self):
         if self.PARAMS.urdf == "":
-            (_model, _, _, joints_objects, ee) = (None, None, None, [], None)
+            _model, _, _, joints_objects, ee = (None, None, None, [], None)
             self.PARAMS.start_effector_name = "NO_URDF"
             self.PARAMS.end_effector_name = "NO_URDF"
         else:
-            (_model, _, _, joints_objects, ee) = load_set_urdf_raw(
+            _model, _, _, joints_objects, ee = load_set_urdf_raw(
                 self.PARAMS.urdf,
                 make_ee(self.PARAMS.end_effector_name),
                 self.PARAMS.start_effector_name,
