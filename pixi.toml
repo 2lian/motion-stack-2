@@ -13,7 +13,7 @@ motion_stack = {path = "./src/motion_stack/", editable=true}
 ms_moonbot_zero = {path = "./src/ms_moonbot_zero/", editable=true}
 ms_pyzeros_bridge = {path = "./src/ms_pyzeros_bridge/", editable=true}
 # pyzeros = {path = "./../pyzeros2/", editable=false}
-pyzeros = {git = "ssh://git@github.com/2lian/pyzeros2.git", rev="d1e79ace9c7a025314931ddeae4c48e9434d2935"}
+pyzeros = {git = "ssh://git@github.com/2lian/pyzeros2.git", rev="fde6d398844d4ba9e5e9e215291ee4cbafc56200"}
 
 [feature.pyproject.dependencies]
 zenohd="*"

@@ -209,7 +209,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d8/db/795879cc3ddfe338599bddea6388cc5100b088db0a4caf6e6c1af1c27e04/python_discovery-1.2.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/74/27/e5b8f34d02d9995b80abcef563ea1f8b56d20134d8f4e5e81733b1feceb2/pyyaml-6.0.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
-      - pypi: git+ssh://git@github.com/2lian/pyzeros2.git?rev=d1e79ace9c7a025314931ddeae4c48e9434d2935#d1e79ace9c7a025314931ddeae4c48e9434d2935
+      - pypi: git+ssh://git@github.com/2lian/pyzeros2.git?rev=fde6d398844d4ba9e5e9e215291ee4cbafc56200#fde6d398844d4ba9e5e9e215291ee4cbafc56200
       - pypi: https://files.pythonhosted.org/packages/14/25/b208c5683343959b670dc001595f2f3737e051da617f66c31f7c4fa93abc/rich-14.3.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ca/e5/d708d262b600a352abe01c2ae360d8ff75b0af819b78e9af293191d928e6/rich_click-1.9.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/06/ba/c7534df8fb3f04c48862f24f1b4118c0d1e793fdf78e90fe514cbf404e01/roboticstoolbox_python-1.1.1.tar.gz
@@ -3478,7 +3478,7 @@ packages:
   license_family: MIT
   size: 198293
   timestamp: 1770223620706
-- pypi: git+ssh://git@github.com/2lian/pyzeros2.git?rev=d1e79ace9c7a025314931ddeae4c48e9434d2935#d1e79ace9c7a025314931ddeae4c48e9434d2935
+- pypi: git+ssh://git@github.com/2lian/pyzeros2.git?rev=fde6d398844d4ba9e5e9e215291ee4cbafc56200#fde6d398844d4ba9e5e9e215291ee4cbafc56200
   name: pyzeros
   version: 0.1.0
   requires_dist:
