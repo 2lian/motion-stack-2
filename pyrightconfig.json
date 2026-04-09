@@ -1,0 +1,21 @@
+{
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "**/__pycache__"
+    ],
+    "venvPath": ".pixi/envs",
+    "venv": "default",
+    "executionEnvironments": [
+        {
+            "root": "src",
+            "extraPaths": [
+                "src/motion_stack",
+                "src/ms_moonbot_zero",
+                "src/ms_pyzeros_bridge",
+                "../pyzeros2"
+            ]
+        }
+    ]
+}

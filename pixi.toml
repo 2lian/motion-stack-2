@@ -12,14 +12,14 @@ router = "RUST_LOG=debug zenohd -c ./router.json5"
 motion_stack = {path = "./src/motion_stack/", editable=true}
 ms_moonbot_zero = {path = "./src/ms_moonbot_zero/", editable=true}
 ms_pyzeros_bridge = {path = "./src/ms_pyzeros_bridge/", editable=true}
-pyzeros = {path = "./../pyzeros2/", editable=false}
-# pyzeros = {git = "ssh://git@github.com/ssf-thku/OmniLRS-artefacts.git", rev="1c6cae781d614d6264466cd4f33057e5a5caf13f"}
+# pyzeros = {path = "./../pyzeros2/", editable=false}
+pyzeros = {git = "ssh://git@github.com/2lian/pyzeros2.git", rev="d1e79ace9c7a025314931ddeae4c48e9434d2935"}
 
 [feature.pyproject.dependencies]
 zenohd="*"
 python = "3.13.*"
 uv = "*"
-# pyright = "*"
+pyright = "*"
 isort = "*"
 black = "*"
 glow-md = "*"
@@ -27,7 +27,7 @@ pytest = "*"
 mypy = "*"
 pytest-asyncio = "*"
 rerun-sdk = "*"
-nvim = ">=0.11.0,<0.12"
+# nvim = ">=0.11.0,<0.12"
 
 [environments]
 default = { features = ["pyproject"] }
