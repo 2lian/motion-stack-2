@@ -33,33 +33,6 @@ def load_moonbot_zero_urdf() -> str:
         )
 
 
-async def sync_traj(cores: list[JointCore]):
-    async with asyncio.TaskGroup() as tg:
-        syncer = AsyncJointSyncer()
-        for core in cores:
-            # not good because no lifetime, but I don't care
-            core.joint_read_output.asap_callback.append(
-                syncer.sensor_input._input_data_asyncio
-            )
-            syncer.command_output.asap_callback.append(
-                core.command_sub._input_data_asyncio
-            )
-        tg.create_task(syncer.run())
-        await syncer.wait_ready(
-            {f"joint{a}_{b}" for a in range(1, 5) for b in range(1, 4)}
-        )
-        print(f"{colorama.Fore.RED}SYNCER READY :){colorama.Fore.RESET}")
-        while 1:
-            await syncer.lerp(
-                {f"joint{a}_{b}": 0.5 for a in range(1, 5) for b in range(1, 4)}
-            )
-            print(f"{colorama.Fore.RED}OH :){colorama.Fore.RESET}")
-            await syncer.lerp(
-                {f"joint{a}_{b}": -0.2 for a in range(1, 5) for b in range(1, 4)}
-            )
-            print(f"{colorama.Fore.RED}WOW :){colorama.Fore.RESET}")
-
-
 async def main():
     ##### ===  SETUP === #####
 
