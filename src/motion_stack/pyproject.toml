@@ -1,67 +1,58 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=58.2" ]
+
 [project]
-name = "motion_stack"
+name = "motion-stack"
 version = "0.0.1"
 description = "TODO"
 readme = "README.md"
+keywords = [ "asyncio", "robotics" ]
 license = "MIT"
-authors = [
-  { name = "Elian NEPPEL", email = "elian.dev@posteo.com" }
-]
+authors = [ { name = "Elian NEPPEL", email = "elian.dev@posteo.com" } ]
 requires-python = ">=3.10,<3.15"
-keywords = ["asyncio", "robotics"]
-
 classifiers = [
   "Development Status :: 4 - Beta",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Developers",
-  "Natural Language :: English",
   "Environment :: Console",
+  "Framework :: AsyncIO",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
-  "Operating System :: POSIX :: Linux",
-  "Operating System :: Microsoft :: Windows",
-  "Operating System :: MacOS",
   "Topic :: Scientific/Engineering",
   "Topic :: System :: Networking",
-  "Framework :: AsyncIO",
 ]
-
 dependencies = [
-"asyncio_for_robotics>=1.3,<1.4",
-"numpy>1.20",
-"np2typing",
-"xacro",
-"numpy-quaternion",
-"roboticstoolbox-python",
-"gogo_keyboard",
-"urwid",
-"dacite",
-"colorama",
-"ujson",
-"rerun-sdk",
+  "asyncio-for-robotics",
+  "colorama",
+  "dacite",
+  "gogo-keyboard",
+  "np2typing",
+  "numpy>1.20",
+  "numpy-quaternion",
+  "rerun-sdk",
+  "roboticstoolbox-python",
+  "ujson",
+  "urwid",
+  "xacro",
 ]
+optional-dependencies = {}
+urls.Homepage = "https://github.com/2lian/asyncio-gazebo"
+urls.Issues = "https://github.com/2lian/asyncio-gazebo/issues"
+urls.Repository = "https://github.com/2lian/asyncio-gazebo"
 
-[build-system]
-requires = ["setuptools >= 58.2.0"]
-build-backend = "setuptools.build_meta"
+[tool.setuptools]
+package-data.motion_stack = [ "py.typed" ]
+packages.find.include = [ "motion_stack", "motion_stack.*" ]
 
-[tool.setuptools.packages.find]
-include = ["motion_stack", "motion_stack.*"]
-
-[project.optional-dependencies]
-
-[project.urls]
-Homepage = "https://github.com/2lian/asyncio-gazebo"
-Repository = "https://github.com/2lian/asyncio-gazebo"
-Issues = "https://github.com/2lian/asyncio-gazebo/issues"
-
-[tool.setuptools.package-data]
-"motion_stack" = ["py.typed"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-asyncio_mode = "auto"
+[tool.pytest]
+ini_options.testpaths = [ "tests" ]
+ini_options.asyncio_mode = "auto"

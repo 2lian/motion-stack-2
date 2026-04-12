@@ -1,22 +1,27 @@
 [workspace]
-authors = ["Neppel Elian <elian.neppel@posteo.eu>"]
-channels = ["conda-forge"]
+authors = [ "Neppel Elian <elian.neppel@posteo.eu>" ]
+channels = [ "conda-forge" ]
 name = "motion-stack-2"
-platforms = ["linux-64"]
+platforms = [ "linux-64" ]
 version = "0.1.0"
 
 [tasks]
 router = "RUST_LOG=debug zenohd -c ./router.json5"
 
-[feature.pyproject.pypi-dependencies]
-motion_stack = {path = "./src/motion_stack/", editable=true}
-ms_moonbot_zero = {path = "./src/ms_moonbot_zero/", editable=true}
-ms_pyzeros_bridge = {path = "./src/ms_pyzeros_bridge/", editable=true}
-# pyzeros = {path = "./../pyzeros2/", editable=false}
-pyzeros = {git = "ssh://git@github.com/2lian/pyzeros2.git", rev="fde6d398844d4ba9e5e9e215291ee4cbafc56200"}
+## # ROS 2 Jazzy ####
+# isolated. For asserting interop with normal ROS 2
+[feature.jazzy]
+channels = [ "https://prefix.dev/robostack-jazzy" ]
+
+[feature.jazzy.dependencies]
+python = "*"
+lark-parser = ">=0.12.0,<0.13"
+ros-jazzy-ros-core = ">=0.11.0,<0.12"
+ros-jazzy-ros2cli = ">=0.32.8,<0.33"
+ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
 
 [feature.pyproject.dependencies]
-zenohd="*"
+zenohd = "*"
 python = "3.13.*"
 uv = "*"
 pyright = "*"
@@ -27,33 +32,28 @@ pytest = "*"
 mypy = "*"
 pytest-asyncio = "*"
 rerun-sdk = "*"
+
+[feature.pyproject.pypi-dependencies]
+motion_stack = { path = "./src/motion_stack/", editable = true }
+ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
+ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
+# pyzeros = {path = "./../pyzeros2/", editable=false}
+pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
+asyncio-for-robotics = { git = "ssh://git@github.com/2lian/asyncio-for-robotics.git" }
+
 # nvim = ">=0.11.0,<0.12"
-
 [environments]
-default = { features = ["pyproject"] }
-ros = { features = ["jazzy"] }
+default = { features = [ "pyproject" ] }
+ros = { features = [ "jazzy" ] }
 
-
-### ROS 2 Jazzy ####
-# isolated. For asserting interop with normal ROS 2
-[feature.jazzy]
-channels = ["https://prefix.dev/robostack-jazzy"]
-
-[feature.jazzy.dependencies]
-python="*"
-lark-parser = ">=0.12.0,<0.13"
-ros-jazzy-ros-core = ">=0.11.0,<0.12"
-ros-jazzy-ros2cli = ">=0.32.8,<0.33"
-ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
-
-### Env variables ###
+## # Env variables ###
 [activation.env]
-RMW_IMPLEMENTATION="rmw_zenoh_cpp"
-ROS_DOMAIN_ID="0"
-ROS_AUTOMATIC_DISCOVERY_RANGE="LOCALHOST"
-ZENOH_ROUTER_CONFIG_URI="./router.json5"
-ZENOH_SESSION_CONFIG_URI="./client.json5"
-ROS_LOCALHOST_ONLY=""
-PYTHON_GIL="1"
+RMW_IMPLEMENTATION = "rmw_zenoh_cpp"
+ROS_DOMAIN_ID = "0"
+ROS_AUTOMATIC_DISCOVERY_RANGE = "LOCALHOST"
+ZENOH_ROUTER_CONFIG_URI = "./router.json5"
+ZENOH_SESSION_CONFIG_URI = "./client.json5"
+ROS_LOCALHOST_ONLY = ""
+PYTHON_GIL = "1"
 
 [dependencies]

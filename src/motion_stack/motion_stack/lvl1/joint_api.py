@@ -575,7 +575,7 @@ class AsyncJointSyncer(JointSyncer):
             velocity=np.deg2rad(0.01),
             effort=np.deg2rad(0.001),
         ),
-        batch_time: float = 0.010,
+        batch_time: float = 0.001,
     ) -> None:
         super().__init__(interpolation_delta, on_target_delta)
         self.sensor_input: BaseSub[JStateBatch] = BaseSub()
