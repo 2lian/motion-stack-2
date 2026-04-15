@@ -7,6 +7,8 @@ version = "0.1.0"
 
 [tasks]
 router = "RUST_LOG=debug zenohd -c ./router.json5"
+moonbot_zero = "python ./src/ms_moonbot_zero/ms_moonbot_zero/lvl1.py"
+api_mz = "python ./src/ms_moonbot_zero/ms_moonbot_zero/pyzeros_api_demo.py"
 
 ## # ROS 2 Jazzy ####
 # isolated. For asserting interop with normal ROS 2
@@ -37,9 +39,15 @@ rerun-sdk = "*"
 motion_stack = { path = "./src/motion_stack/", editable = true }
 ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
 ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
-# pyzeros = {path = "./../pyzeros2/", editable=false}
-pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
+moonbot_builder= { path = "./src/moonbot_builder/", editable = true }
+hero_assets= { path = "./src/hero_assets/", editable = true }
+pyzeros = { path = "./../pyzeros2/", editable = true }
+# pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
 asyncio-for-robotics = { git = "ssh://git@github.com/2lian/asyncio-for-robotics.git" }
+uvloop = { git = "https://github.com/MagicStack/uvloop.git" }
+
+[pypi-options]
+no-build-isolation = [ "uvloop" ]
 
 # nvim = ">=0.11.0,<0.12"
 [environments]

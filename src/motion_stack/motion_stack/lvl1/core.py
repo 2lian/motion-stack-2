@@ -4,6 +4,7 @@ import logging
 import time
 import warnings
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from pprint import pprint
 from typing import Any, Callable, Final, Self, TypeAlias
 
@@ -22,6 +23,8 @@ from ..utils.robot_parsing import get_limit, load_set_urdf_raw, make_ee
 from ..utils.time import Time
 
 JStateBatch: TypeAlias = dict[str, JState]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -48,52 +51,19 @@ class Lvl1Param:
     continuous_read_hz: float = 24
     drop_ousiders: bool = True
 
-    def to_json(self):
+    def to_json(self) -> str:
         return ujson.dumps(dataclasses.asdict(self), indent=2)
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         j_dic = ujson.loads(json_str)
+        urdf = j_dic.get("urdf", "")
+        if urdf and Path(urdf).is_file():
+            j_dic["urdf"] = Path(urdf).read_text()
         return dacite.from_dict(cls, j_dic, dacite.Config())
 
 
 lvl1_default: Final[Lvl1Param] = Lvl1Param()
-
-
-@dataclass
-class Lvl1Info:
-    joints: list[str] = dataclasses.field(default_factory=lambda *_: [])
-    namespace: str = "ms"
-    end_effector_name: None | str | int = "ALL"
-    start_effector_name: None | str = None
-    mvmt_update_rate: float = 100
-    joint_buffer: JState = dataclasses.field(
-        default_factory=lambda *_: JState(
-            name="",
-            time=Time.sn(sec=0.5),
-            position=np.deg2rad(0.05),
-            velocity=np.deg2rad(0.01),
-            effort=np.deg2rad(0.001),
-        )
-    )
-    add_joint: list[str] = dataclasses.field(default_factory=lambda *_: [])
-    ignore_limits: bool = False
-    limit_margin: float = 0
-    batch_time: float = 0.001
-    slow_pub_time: float = 0.5
-    continuous_read_hz: float = 24
-    drop_ousiders: bool = True
-
-    def to_json(self):
-        return ujson.dumps(dataclasses.asdict(self))
-
-    @classmethod
-    def from_json(cls, json_str: str) -> Self:
-        j_dic = ujson.loads(json_str)
-        return dacite.from_dict(cls, j_dic, dacite.Config())
-
-
-logger = logging.getLogger(__name__)
 
 
 class JointPipeline:
@@ -117,12 +87,20 @@ class JointPipeline:
             batch_time: Time window (in seconds) used to batch urgent data
                 before flushing.
         """
+        self._batch_time: float = batch_time
+        self._queue_size = int(5e3)
+        #: Rate at which to publish non-urgent states
+        self.slow_rate: float = 2
+
         #: Subscription providing raw incoming joint state batches.
         self.input_sub: BaseSub[JStateBatch] = input_sub
+        self.__input_sub_main_iter = self.input_sub.listen_reliable(
+            queue_size=self._queue_size
+        )
 
         #: Emits the latest pre-processed joint state batches.
         #: This stream is unbuffered and may be updated at high frequency.
-        self.internal_sub: BaseSub[JStateBatch] = BaseSub()
+        self.internal_sub: BaseSub[JStateBatch] = BaseSub()  # not used internaly
 
         #: Internal buffer tracking joint states and their scheduling class
         #: (e.g. accumulated, new, urgent) based on `buffer_delta`.
@@ -131,18 +109,15 @@ class JointPipeline:
         #: Emits buffered batches that are ready for output processing,
         #: including both urgent (fast path) and periodic (slow path) flushes.
         self.buffered_sub: BaseSub[JStateBatch] = BaseSub()
+        self.__buffered_sub_main_iter = self.buffered_sub.listen_reliable(
+            queue_size=self._queue_size
+        )
 
         #: Final output stream exposed to external consumers after post-processing.
         self.output_sub: BaseSub[JStateBatch] = BaseSub()
 
-        #: Rate at which to publish non-urgent states
-        self.slow_rate: float = 2
-
         #: Event signaling the presence of urgent data that should be flushed
         self._flush_trigger: asyncio.Event = asyncio.Event()
-
-        self._batch_time: float = batch_time
-        self._queue_size = int(5e3)
 
     async def run(self):
         """Run the pipeline.
@@ -188,9 +163,7 @@ class JointPipeline:
         slow pre-processing does not block ingestion.
         """
         async with asyncio.TaskGroup() as tg:
-            async for jsb in self.input_sub.listen_reliable(
-                queue_size=self._queue_size
-            ):
+            async for jsb in self.__input_sub_main_iter:
                 # this is equivalent to calling _parallel_preproc here, but if the
                 # pre_process takes some time for certain inputs, the other inputs
                 # are not blocked. So the pre_process is capable of changing timing
@@ -228,6 +201,7 @@ class JointPipeline:
                 continue
             self.buffered_sub._input_data_asyncio(to_send)
 
+    @afor.scoped
     async def _slow_loop(self):
         """Periodically flush non-urgent buffered data."""
         async for t_ns in afor.Rate(frequency=self.slow_rate).listen():
@@ -243,9 +217,7 @@ class JointPipeline:
         Post-processing is executed in parallel to avoid blocking the pipeline.
         """
         async with asyncio.TaskGroup() as tg:
-            async for jsb in self.buffered_sub.listen_reliable(
-                queue_size=self._queue_size
-            ):
+            async for jsb in self.__buffered_sub_main_iter:
                 tg.create_task(
                     self._parallel_postproc(jsb), name="pipeline_output_para"
                 )
@@ -277,11 +249,6 @@ class JointCore:
         self.lvl2_remap = StateRemapper()  # empty, to be updated by user
         self.create_sensor_pipelines()
         self.create_command_pipelines()
-
-    def get_info(self) -> Lvl1Info:
-        d = asdict(self.PARAMS)
-        del d["urdf"]
-        return Lvl1Info(joints=list(self.joints_of_interest), **d)
 
     @property
     def motor_output(self) -> BaseSub[JStateBatch]:

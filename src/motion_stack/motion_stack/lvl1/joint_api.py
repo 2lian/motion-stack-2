@@ -9,9 +9,9 @@ This high level API alows for multi-joint control and syncronization (over sever
 
 import asyncio
 import copy
-from pprint import pprint
 import warnings
 from abc import ABC, abstractmethod
+from pprint import pprint
 from typing import (
     Any,
     AsyncGenerator,
@@ -581,6 +581,12 @@ class AsyncJointSyncer(JointSyncer):
         self.sensor_input: BaseSub[JStateBatch] = BaseSub()
         self._pipeline = JointPipeline(self.sensor_input, buffer, batch_time)
         self.command_output: BaseSub[JStateBatch] = BaseSub()
+        self._iterator = self._pipeline.buffered_sub.listen()
+
+    async def run(self) -> Coroutine[Any, Any, None]:
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(self._pipeline.run())
+            tg.create_task(self._consume_task())
 
     def _make_motion(
         self, target: Dict[str, float], toward_func: Callable[[Dict[str, float]], bool]
@@ -606,17 +612,7 @@ class AsyncJointSyncer(JointSyncer):
     def sensor(self) -> Dict[str, JState]:
         return self._pipeline.internal_state.accumulated
 
-    async def _consume_task(self, jsb_iter: AsyncGenerator[JStateBatch, None]):
-        async for jsb in jsb_iter:
+    async def _consume_task(self):
+        async for jsb in self._iterator:
             # print(jsb)
             self.execute()
-
-    def run(self) -> Coroutine[Any, Any, None]:
-        i = self._pipeline.buffered_sub.listen()
-
-        async def _run():
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(self._pipeline.run())
-                tg.create_task(self._consume_task(i))
-
-        return _run()

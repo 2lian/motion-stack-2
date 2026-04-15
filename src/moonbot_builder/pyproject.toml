@@ -1,0 +1,18 @@
+[project]
+name = "moonbot_builder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [ "jinja2", "motion-stack" ]
+
+[tool.setuptools]
+package-data.motion_stack = [ "py.typed" ]
+packages.find.include = [ "moonbot_builder", "moonbot_builder.*" ]

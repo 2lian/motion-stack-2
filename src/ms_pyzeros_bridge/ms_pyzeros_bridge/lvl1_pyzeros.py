@@ -1,15 +1,20 @@
+import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import Any, AsyncGenerator, Coroutine
+
+import asyncio_for_robotics as afor
 import numpy as np
 import ros2_pyterfaces.cyclone.all_msgs as cycl_msgs
 import ros2_pyterfaces.cyclone.all_srvs as cycl_srvs
 import ros2_pyterfaces.cydr.all_msgs as cydr_msgs
 from asyncio_for_robotics import BaseSub
+from asyncio_for_robotics.core.sub import _AUTO_SCOPE
 from motion_stack.lvl1.core import JointCore, JStateBatch
 from motion_stack.lvl1.core import Time as TimeMS
 from motion_stack.utils.joint_state import JState
 from pyzeros import Pub, Server, Sub
+from pyzeros._scope import ScopeOwned
 from pyzeros.node import Node
 from pyzeros.qos import QosProfile
 from pyzeros.service_server import Responder
@@ -18,7 +23,7 @@ from ros2_pyterfaces.cyclone.idl import IdlServiceType, IdlStruct, make_idl_serv
 from ros2_pyterfaces.cydr import idl as cydr_idl
 from ros2_pyterfaces.cydr.all_msgs import Empty, Header, JointState, Time
 
-from .utils import cydr_to_jsb, js_to_cycl, js_to_cydr
+from .utils import cycl_to_jsb, cydr_to_jsb, js_to_cycl, js_to_cydr
 
 
 @dataclass
@@ -38,14 +43,14 @@ class ReturnJointState_Response(
 ReturnJointState = make_idl_service(ReturnJointState_Request, ReturnJointState_Response)
 
 
-class PublisherHookJSB:
+class PublisherHookJSB(ScopeOwned):
     def __init__(
         self,
         sub: BaseSub[JStateBatch],
         topic: str | TopicInfo[cydr_msgs.JointState | cycl_msgs.JointState],
         *,
+        scope: afor.Scope | None | object = _AUTO_SCOPE,
         session: Node | None = None,
-        defer: bool = False,
     ):
         """Publishes what's on the sub to ROS 2 using pyzeros.
 
@@ -55,13 +60,14 @@ class PublisherHookJSB:
                 - if string, uses cydr with default QoS
                 - if TopicInfo, uses it instead (automatically adapts
                                                   between cyclone and cydr)
+            scope: afor scope of this object
             session: pyzeros session. Resolved from context if omitted.
-            defer: Defer pyzeros entity declaration.
         """
+        self.filter = set()
         self._base_sub = sub
         if isinstance(topic, str):
             self.topic_info: TopicInfo[cydr_msgs.JointState | cycl_msgs.JointState] = (
-                TopicInfo(topic, cydr_msgs.JointState, QosProfile.default())
+                TopicInfo(topic, cydr_msgs.JointState, QosProfile.default())  # type: ignore
             )
         else:
             self.topic_info: TopicInfo[cydr_msgs.JointState | cycl_msgs.JointState] = (
@@ -74,38 +80,56 @@ class PublisherHookJSB:
         else:
             self._is_cydr = False
 
-        self.pub = Pub(*self.topic_info.as_arg(), session=session, defer=defer)
+        self.pyz_pub = Pub(*self.topic_info.as_arg(), session=session, scope=scope)
+        self.declare()
+        self._init_scope(scope)
 
-    def run(self) -> Coroutine[Any, Any, None]:
-        return self._publish_hook(self._base_sub.listen_reliable(queue_size=0))
+    def declare(self):
+        self.pyz_pub.declare()
+        self._base_sub.asap_callback.append(self._convert_publish)
 
-    async def _publish_hook(self, iterator: AsyncGenerator[JStateBatch, None]):
-        async for jsb in iterator:
-            self.publish(jsb)
+    def close(self):
+        self._base_sub.asap_callback.remove(self._convert_publish)
 
-    def publish(self, jsb: JStateBatch):
+    def _convert_publish(self, jsb: JStateBatch):
         now = TimeMS.from_parts(nano=time.time_ns())
-        if self._is_cydr:
-            msgs = js_to_cydr(jsb.values(), now)
+        if self.filter != set():
+            values = [k for k in jsb.values() if k.name in self.filter]
         else:
-            msgs = js_to_cycl(jsb.values(), now)
+            values = jsb.values()
+        if self._is_cydr:
+            msgs = js_to_cydr(values, now)
+        else:
+            msgs = js_to_cycl(values, now)
         for msg in msgs:
-            self.pub.publish(msg)
+            self.pyz_pub.publish(msg)
 
 
-class SubscriberHookJSB:
+class SubscriberHookJSB(ScopeOwned):
     def __init__(
         self,
         sub: BaseSub[JStateBatch],
         topic: str | TopicInfo[cydr_msgs.JointState | cycl_msgs.JointState],
         *,
+        scope: afor.Scope | None | object = _AUTO_SCOPE,
         session: Node | None = None,
-        defer: bool = False,
-    ) -> None:
+    ):
+        """Publishes what's on the sub to ROS 2 using pyzeros.
+
+        Args:
+            sub: JStateBatch subscriber whose data should be published
+            topic: Topic to publish onto
+                - if string, uses cydr with default QoS
+                - if TopicInfo, uses it instead (automatically adapts
+                                                  between cyclone and cydr)
+            scope: afor scope of this object
+            session: pyzeros session. Resolved from context if omitted.
+        """
+        self.seen = set()
         self._base_sub = sub
         if isinstance(topic, str):
             self.topic_info: TopicInfo[cydr_msgs.JointState | cycl_msgs.JointState] = (
-                TopicInfo(topic, cydr_msgs.JointState, QosProfile.default())
+                TopicInfo(topic, cydr_msgs.JointState, QosProfile.default())  # type: ignore
             )
         else:
             self.topic_info: TopicInfo[cydr_msgs.JointState | cycl_msgs.JointState] = (
@@ -117,44 +141,61 @@ class SubscriberHookJSB:
         else:
             self._is_cydr = False
 
-        self.sub = Sub(*self.topic_info.as_arg(), session=session, defer=defer)
+        self.pyz_sub = Sub(*self.topic_info.as_arg(), session=session, scope=scope)
+        self._init_scope(scope)
+        self._declare()
 
-    async def _listen_jset(self, iterator: AsyncGenerator[JointState, None]):
-        async for msg in iterator:
-            timestamp = TimeMS.from_parts(
-                msg.header.stamp.sec, msg.header.stamp.nanosec
-            )
-            if timestamp.nano == 0:
-                timestamp = TimeMS(time.time_ns())
-            if self._is_cydr:
-                jsb = cydr_to_jsb(msg, timestamp)
-            else:
-                raise NotImplemented("cycl_to_jsb does not exist yet")
-            self._base_sub._input_data_asyncio(jsb)
+    def _declare(self):
+        self.pyz_sub.asap_callback.append(self._convert_forward)
+        self.pyz_sub.declare()
 
-    def run(self) -> Coroutine[Any, Any, None]:
-        return self._listen_jset(self.sub.listen_reliable(queue_size=0))
+    def close(self):
+        self.pyz_sub.asap_callback.remove(self._convert_forward)
+        self.pyz_sub.close()
+
+    def _convert_forward(self, msg):
+        timestamp = TimeMS.from_parts(msg.header.stamp.sec, msg.header.stamp.nanosec)
+        if timestamp.nano == 0:
+            timestamp = TimeMS(time.time_ns())
+        if self._is_cydr:
+            jsb = cydr_to_jsb(msg, timestamp)
+        else:
+            jsb = cycl_to_jsb(msg, timestamp)
+        self.seen.update(jsb.keys())
+        self._base_sub._input_data_asyncio(jsb)
 
 
-class Lvl1Services:
+class Lvl1Services(ScopeOwned):
     def __init__(
-        self, joint_core: JointCore, *, session: Node | None = None
+        self,
+        joint_core: JointCore,
+        *,
+        scope: afor.Scope | None | object = _AUTO_SCOPE,
+        session: Node | None = None,
     ) -> None:
+        self.bg_task: None | asyncio.Task = None
         self.core: JointCore = joint_core
 
-        self.adv_srv = Server(ReturnJointState, "advertise_joints", session=session)
-        self.alive_srv = Server(cycl_srvs.Empty, "joint_alive", session=session)
+        self.adv_srv = Server(
+            ReturnJointState, "advertise_joints", session=session, scope=scope
+        )
+        self.alive_srv = Server(
+            cycl_srvs.Empty, "joint_alive", session=session, scope=scope
+        )
+        self.iterator = self.adv_srv.listen_reliable(queue_size=0)
 
-    def run(self) -> Coroutine[Any, Any, None]:
-        return self._srv_respond(self.adv_srv.listen_reliable())
+        self._init_scope(scope)
+        if self._scope is not None:
+            self.bg_task = self._scope.task_group.create_task(self.manual_run())
 
-    async def _srv_respond(
-        self,
-        iterator: AsyncGenerator[
-            Responder[ReturnJointState_Request, ReturnJointState_Response], None
-        ],
-    ):
-        async for responder in iterator:
+    def close(self):
+        if self.bg_task is not None:
+            self.bg_task.cancel()
+        self.adv_srv.close()
+        self.alive_srv.close()
+
+    async def manual_run(self):
+        async for responder in self.iterator:
             now = TimeMS.from_parts(nano=time.time_ns())
             jsb = self.core.sensor_pipeline.internal_state.accumulated
             sec = now.to_parts()[0]

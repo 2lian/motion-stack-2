@@ -1,15 +1,18 @@
 import asyncio
+import numpy as np
 import dataclasses
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from asyncio_for_robotics import BaseSub
 import rerun as rr
 import rerun.urdf as rr_urdf
+from asyncio_for_robotics import BaseSub
 
-from .core import JStateBatch, JointCore
 from ..utils.joint_state import JState
 from ..utils.time import Time
+from .core import JointCore, JStateBatch
+
 
 class Lvl1RerunHook:
     def __init__(
@@ -61,33 +64,49 @@ class Lvl1RerunHook:
 
         urdf_path = Path(self._temp_dir.name) / "robot.urdf"
         urdf_path.write_text(self.core.PARAMS.urdf)
-        urdf = rr_urdf.UrdfTree.from_file_path(urdf_path, entity_path_prefix=self.assets)
+        urdf = rr_urdf.UrdfTree.from_file_path(
+            urdf_path, entity_path_prefix=self.assets
+        )
         urdf.log_urdf_to_recording(self.recording)
         self._urdf_joints = {joint.name: joint for joint in urdf.joints()}
 
     async def _sub(self, stream_name: str, sub: BaseSub[JStateBatch]) -> None:
         async for jsb in sub.listen_reliable():
+            rr.set_time("main", timestamp=np.datetime64(time.time_ns(), 'ns'))
             self._log_batch(stream_name, jsb)
             if stream_name == "joint_read_output":
                 self._log_tf_batch(jsb)
 
     def _log_batch(self, stream_name: str, jsb: JStateBatch) -> None:
         for joint_name, joint_state in jsb.items():
-            self._log_joint(stream_name, joint_name, joint_state)
-
-    def _log_joint(self, stream_name: str, joint_name: str, joint_state: JState) -> None:
-        joint_root = f"{self.joints}/{stream_name}/{joint_name}"
-        rr.log(
-            joint_root,
-            rr.AnyValues(
-                name=joint_name,
-                timestamp=int(joint_state.time.nano) if joint_state.time is not None else None,
-                position=float(joint_state.position) if joint_state.position is not None else None,
-                velocity=float(joint_state.velocity) if joint_state.velocity is not None else None,
-                effort=float(joint_state.effort) if joint_state.effort is not None else None,
-            ),
-            recording=self.recording,
-        )
+            joint_root = f"{self.joints}/{stream_name}/{joint_name}"
+            rr.log(
+                joint_root,
+                rr.AnyValues(
+                    name=joint_name,
+                    timestamp=(
+                        int(joint_state.time.nano)
+                        if joint_state.time is not None
+                        else None
+                    ),
+                    position=(
+                        float(joint_state.position)
+                        if joint_state.position is not None
+                        else None
+                    ),
+                    velocity=(
+                        float(joint_state.velocity)
+                        if joint_state.velocity is not None
+                        else None
+                    ),
+                    effort=(
+                        float(joint_state.effort)
+                        if joint_state.effort is not None
+                        else None
+                    ),
+                ),
+                recording=self.recording,
+            )
 
     def _log_tf_batch(self, jsb: JStateBatch) -> None:
         for joint_name, joint_state in jsb.items():
@@ -95,7 +114,11 @@ class Lvl1RerunHook:
             urdf_joint = self._urdf_joints.get(joint_name)
             if position is None or urdf_joint is None:
                 continue
-            rr.log(self.tf, urdf_joint.compute_transform(position), recording=self.recording)
+            rr.log(
+                self.tf,
+                urdf_joint.compute_transform(position, clamp=False),
+                recording=self.recording,
+            )
 
     def log_params(self, path: str, value: dict) -> None:
         if not isinstance(value, dict):

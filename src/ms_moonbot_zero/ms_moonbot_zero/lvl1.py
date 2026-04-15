@@ -1,4 +1,5 @@
 import asyncio
+import uvloop
 from contextlib import suppress
 from importlib.resources import as_file, files
 
@@ -39,16 +40,13 @@ async def run_leg(limb_n: int):
             lo = LoopBack(core)
             rr_hook = Lvl1RerunHook(core)
 
-            lvl1_srvs = Lvl1Services(core)
-            joint_set_sub = SubscriberHookJSB(core.command_sub, "joint_set")
-            joint_read_pub = PublisherHookJSB(core.joint_read_output, "joint_read")
+            Lvl1Services(core)
+            SubscriberHookJSB(core.command_sub, "joint_set")
+            PublisherHookJSB(core.joint_read_output, "joint_read")
 
             scope.task_group.create_task(core.run())
             scope.task_group.create_task(lo.run())
             scope.task_group.create_task(rr_hook.run())
-            scope.task_group.create_task(lvl1_srvs.run())
-            scope.task_group.create_task(joint_set_sub.run())
-            scope.task_group.create_task(joint_read_pub.run())
 
             await asyncio.Future()  # run until cancelled
 
@@ -64,4 +62,4 @@ async def main():
 
 if __name__ == "__main__":
     with suppress(KeyboardInterrupt):
-        asyncio.run(main())
+        uvloop.run(main())

@@ -1,10 +1,8 @@
- 
-from .core import JStateBatch, JointCore, JointPipeline, Lvl1Info, Lvl1Param
+from .core import JointCore, JointPipeline, JStateBatch, Lvl1Param
 
 __all__ = [
     "JStateBatch",
     "JointCore",
     "JointPipeline",
-    "Lvl1Info",
     "Lvl1Param",
 ]
