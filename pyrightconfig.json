@@ -5,8 +5,7 @@
     "exclude": [
         "**/__pycache__"
     ],
-    "venvPath": ".pixi/envs",
-    "venv": "default",
+    "pythonPath": ".pixi/envs/default/bin/python",
     "executionEnvironments": [
         {
             "root": "src",
@@ -14,8 +13,7 @@
                 "src/motion_stack",
                 "src/ms_moonbot_zero",
                 "src/ms_pyzeros_bridge",
-                "./src/moonbot_launcher",
-                "../pyzeros2"
+                "src/moonbot_launcher",
             ]
         }
     ]

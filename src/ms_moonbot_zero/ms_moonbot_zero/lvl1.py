@@ -1,11 +1,11 @@
 import asyncio
-import uvloop
+import os
 from contextlib import suppress
 from importlib.resources import as_file, files
 
 import asyncio_for_robotics.zenoh as afor
 import pyzeros
-import rerun as rr
+import uvloop
 from jinja2 import Template
 from motion_stack.lvl1.core import JointCore, Lvl1Param
 from motion_stack.lvl1.lvl0_loopback import LoopBack
@@ -29,37 +29,51 @@ def load_moonbot_zero_urdf() -> str:
         )
 
 
-async def run_leg(limb_n: int):
-    with pyzeros.auto_context(node="lvl1", namespace=f"leg{limb_n+1}"):
-        async with afor.Scope() as scope:
-            params = Lvl1Param(
-                urdf=load_moonbot_zero_urdf(),
-                end_effector_name=limb_n,
-            )
-            core = JointCore(params)
-            lo = LoopBack(core)
-            rr_hook = Lvl1RerunHook(core)
+@afor.scoped
+async def run_leg(params: Lvl1Param, rerun=False):
+    scope = afor.Scope.current()
+    core = JointCore(params)
 
-            Lvl1Services(core)
-            SubscriberHookJSB(core.command_sub, "joint_set")
-            PublisherHookJSB(core.joint_read_output, "joint_read")
+    if rerun:
+        from urllib.parse import quote
 
-            scope.task_group.create_task(core.run())
-            scope.task_group.create_task(lo.run())
-            scope.task_group.create_task(rr_hook.run())
+        import rerun as rr
+        from colorama import Fore, Style
 
-            await asyncio.Future()  # run until cancelled
+        rr.init(pyzeros.auto_session().fully_qualified_name)
+        server_uri = rr.serve_grpc()
+        web_port = 9090
+        rr.serve_web_viewer(
+            web_port=web_port, connect_to=server_uri, open_browser=False
+        )
+        viewer_url = f"http://localhost:{web_port}/?url={quote(server_uri, safe='')}"
+        print(
+            f"\n{Style.BRIGHT}{Fore.CYAN}[rerun] open the viewer at:{Style.RESET_ALL} {viewer_url}\n",
+            flush=True,
+        )
+        rr_hook = Lvl1RerunHook(core)
+        scope.task_group.create_task(rr_hook.run())
 
+    lo = LoopBack(core)
 
-async def main():
-    rr.init("moonbot_zero")
-    rr.connect_grpc()
+    Lvl1Services(core)
+    SubscriberHookJSB(core.command_sub, "joint_set")
+    PublisherHookJSB(core.joint_read_output, "joint_read")
+    PublisherHookJSB(core.continuous_js_output, "/continuous_joint_read")
 
-    async with asyncio.TaskGroup() as tg:
-        for limb_n in range(4):
-            tg.create_task(run_leg(limb_n))
+    scope.task_group.create_task(core.run())
+    scope.task_group.create_task(lo.run())
+
+    await asyncio.Future()  # run until cancelled
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rerun", action="store_true")
+    args = parser.parse_args()
+    params = Lvl1Param(urdf=load_moonbot_zero_urdf())
     with suppress(KeyboardInterrupt):
-        uvloop.run(main())
+        with pyzeros.auto_context(node="lvl1", namespace="/"):
+            uvloop.run(run_leg(params, rerun=args.rerun))

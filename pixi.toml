@@ -1,19 +1,19 @@
 [workspace]
-authors = [ "Neppel Elian <elian.neppel@posteo.eu>" ]
-channels = [ "conda-forge" ]
+authors = ["Neppel Elian <elian.neppel@posteo.eu>"]
+channels = ["conda-forge"]
 name = "motion-stack-2"
-platforms = [ "linux-64" ]
+platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
 router = "RUST_LOG=debug zenohd -c ./router.json5"
 moonbot_zero = "python ./src/ms_moonbot_zero/ms_moonbot_zero/lvl1.py"
-api_mz = "python ./src/ms_moonbot_zero/ms_moonbot_zero/pyzeros_api_demo.py"
+api_mz = "python ./src/ms_moonbot_zero/ms_moonbot_zero/api_demo.py"
 
 ## # ROS 2 Jazzy ####
 # isolated. For asserting interop with normal ROS 2
 [feature.jazzy]
-channels = [ "https://prefix.dev/robostack-jazzy" ]
+channels = ["https://prefix.dev/robostack-jazzy"]
 
 [feature.jazzy.dependencies]
 python = "*"
@@ -23,7 +23,7 @@ ros-jazzy-ros2cli = ">=0.32.8,<0.33"
 ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
 
 [feature.pyproject.dependencies]
-setuptools = "*"
+setuptools = "<68"
 wheel = "*"
 cython = "*"
 zenohd = "*"
@@ -43,20 +43,21 @@ motion_stack = { path = "./src/motion_stack/", editable = true }
 ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
 ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
 moonbot_builder = { path = "./src/moonbot_builder/", editable = true }
-hero_assets = { path = "./src/hero_assets/", editable = true }
-pyzeros = { path = "./../pyzeros2/", editable = true }
-# pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
+# hero_assets = { path = "./src/hero_assets/", editable = true }
+# pyzeros = { path = "./../pyzeros2/", editable = true }
+pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
 asyncio-for-robotics = { git = "ssh://git@github.com/2lian/asyncio-for-robotics.git" }
 uvloop = { git = "https://github.com/MagicStack/uvloop.git" }
-cydr = { path = "./../cydr/", editable = true }
+cydr = "*"
+# cydr = { path = "./../cydr/", editable = true }
 
 [pypi-options]
-no-build-isolation = [ "uvloop" ]
+no-build-isolation = ["uvloop"]
 
 # nvim = ">=0.11.0,<0.12"
 [environments]
-default = { features = [ "pyproject" ] }
-ros = { features = [ "jazzy" ] }
+default = { features = ["pyproject"] }
+ros = { features = ["jazzy"] }
 
 ## # Env variables ###
 [activation.env]
