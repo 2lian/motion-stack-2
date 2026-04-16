@@ -14,13 +14,12 @@ import numpy as np
 import ujson
 from asyncio_for_robotics.core.sub import BaseSub
 from colorama import Fore, Style
-from roboticstoolbox.tools.urdf.urdf import Joint as RTBJoint
 
 from ..utils.joint_mapper import StateRemapper, position_clamp
 from ..utils.joint_state import JState, JStateBuffer, subdict
 from ..utils.printing import list_cyanize
-from ..utils.robot_parsing import get_limit, load_set_urdf_raw, make_ee
 from ..utils.time import Time
+from ..utils.urdf_light import LightJoint, get_limit, make_ee, parse_urdf_joints
 
 JStateBatch: TypeAlias = dict[str, JState]
 
@@ -88,9 +87,11 @@ class JointPipeline:
                 before flushing.
         """
         self._batch_time: float = batch_time
-        self._queue_size = int(5e3)
+        self._queue_size = int(2e2)
         #: Rate at which to publish non-urgent states
-        self.slow_rate: float = 2
+        self.slow_rate: float = (
+            1 / buffer_delta.time.sec if buffer_delta.time is not None else 1
+        )
 
         #: Subscription providing raw incoming joint state batches.
         self.input_sub: BaseSub[JStateBatch] = input_sub
@@ -170,6 +171,11 @@ class JointPipeline:
                 # and ordering.
                 tg.create_task(self._parallel_preproc(jsb), name="pipeline_input_para")
                 # await self._parallel_preproc(jsb)
+                # self.internal_state.push(jsb)
+                # self.internal_sub._input_data_asyncio(jsb)
+                # if not self._flush_trigger.is_set():
+                #     # if len(self.internal_state.marked_urgent()) != 0:
+                #         self._flush_trigger.set()
 
     async def _parallel_preproc(self, jsb: JStateBatch):
         """Apply pre-processing and push results into the internal buffer.
@@ -180,8 +186,8 @@ class JointPipeline:
         self.internal_state.push(internal)
         self.internal_sub._input_data_asyncio(internal)
         if not self._flush_trigger.is_set():
-            if len(self.internal_state.marked_urgent()) != 0:
-                self._flush_trigger.set()
+            # if len(self.internal_state.marked_urgent()) != 0:
+            self._flush_trigger.set()
 
     async def _flush_loop(self):
         """Flush urgent buffered data after a batching delay.
@@ -240,7 +246,7 @@ class JointCore:
         self.continuous_js_output: BaseSub[JStateBatch] = BaseSub()
         self.sensor_pipeline: JointPipeline
         self.command_pipeline: JointPipeline
-        self.joints_objects: list[RTBJoint]
+        self.joints_objects: list[LightJoint]
         self.limits: dict[str, tuple[float, float]] = dict()  # needs improvement
         self.joints_objects, _, _, _ = self.setup_urdf()
         self.joints_of_interest: set[str] = {k.name for k in self.joints_objects}
@@ -352,37 +358,35 @@ class JointCore:
 
     def setup_urdf(self):
         if self.PARAMS.urdf == "":
-            _model, _, _, joints_objects, ee = (None, None, None, [], None)
+            joints_objects = []
+            _ee_n = "all joints"
+            _baselink_name = "NO_URDF"
             self.PARAMS.start_effector_name = "NO_URDF"
             self.PARAMS.end_effector_name = "NO_URDF"
         else:
-            _model, _, _, joints_objects, ee = load_set_urdf_raw(
+            joints_objects, ee_name, _baselink_name = parse_urdf_joints(
                 self.PARAMS.urdf,
                 make_ee(self.PARAMS.end_effector_name),
                 self.PARAMS.start_effector_name,
             )
+            _ee_n = ee_name if ee_name is not None else "all joints"
+            if self.PARAMS.start_effector_name not in {None, ""}:
+                _baselink_name = self.PARAMS.start_effector_name
         joints_objects = [
             k
             for k in joints_objects
             if ((k.joint_type not in {"fixed"}) and (k.name != ""))
         ]
         joints_objects += [
-            RTBJoint(
+            LightJoint(
                 joint_type="continuous",
                 parent=None,
                 child=None,
                 name=jn,
-                # limit=[0, 0],
             )
             for jn in self.PARAMS.add_joint
             if jn != ""
         ]
-        _ee_n = ee.name if ee is not None else "all joints"
-
-        if self.PARAMS.start_effector_name in {None, ""}:
-            _baselink_name = _model.base_link.name
-        else:
-            _baselink_name = self.PARAMS.start_effector_name
         print(
             f"Base_link: {Fore.CYAN}{_baselink_name}{Fore.RESET}\n"
             f"End effector:  {Fore.CYAN}{_ee_n}{Fore.RESET}"
@@ -402,10 +406,14 @@ class JointCore:
             print(f"Joint limits: {Fore.YELLOW}Some Undefined{Fore.RESET} ")
         return joints_objects, _ee_n, _baselink_name, _limits_undefined
 
-    def drop_outsiders(self, jsb: JStateBatch) -> JStateBatch:
+    def drop_outsiders_inplace(self, jsb: JStateBatch) -> JStateBatch:
         if not self.PARAMS.drop_ousiders:
             return jsb
-        return subdict(jsb, self.joints_of_interest)
+        incoming = jsb.keys()
+        useless = incoming - self.joints_of_interest
+        for k in useless:
+            del jsb[k]
+        return jsb
 
     def create_sensor_pipelines(self):
         self.sensor_pipeline = JointPipeline(
@@ -417,7 +425,7 @@ class JointCore:
 
     async def sensor_preproc(self, jsb: JStateBatch) -> JStateBatch:
         jsb = self.lvl0_remap.unmap(jsb)
-        jsb = self.drop_outsiders(jsb)
+        jsb = self.drop_outsiders_inplace(jsb)
         return jsb
 
     async def sensor_postproc(self, jsb: JStateBatch) -> JStateBatch:
@@ -439,7 +447,7 @@ class JointCore:
 
     async def command_preproc(self, jsb: JStateBatch) -> JStateBatch:
         jsb = self.lvl2_remap.unmap(jsb)
-        jsb = self.drop_outsiders(jsb)
+        jsb = self.drop_outsiders_inplace(jsb)
         return jsb
 
     async def command_postproc(self, jsb: JStateBatch) -> JStateBatch:

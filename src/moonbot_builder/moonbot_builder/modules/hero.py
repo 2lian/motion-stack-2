@@ -113,7 +113,7 @@ class MhWheelV0(MhWheel):
 
     @property
     def limb_index(self) -> int:
-        return 10 + self.number
+        return 50 + self.number
 
 
 class MhWheelV1(MhWheel):
@@ -127,7 +127,7 @@ class MhWheelV1(MhWheel):
 
     @property
     def limb_index(self) -> int:
-        return 10 + self.number
+        return 50 + self.number
 
 
 class MhWheelV2(MhWheel):
@@ -144,7 +144,7 @@ class MhWheelV2(MhWheel):
 
     @property
     def limb_index(self) -> int:
-        return 10 + 200 + self.number
+        return 50 + 200 + self.number
 
 
 class MhWheelV3(MhWheel):
@@ -161,7 +161,7 @@ class MhWheelV3(MhWheel):
 
     @property
     def limb_index(self) -> int:
-        return 10 + 300 + self.number
+        return 50 + 300 + self.number
 
 
 class MhCargo(HeroModule):

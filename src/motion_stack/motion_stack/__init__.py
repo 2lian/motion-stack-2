@@ -27,8 +27,6 @@ import numpy as np
 # matplotlib.use("Agg")  # fix for when there is no display
 # scipy.randn = np.random
 
-try:
-    from .rtb_fix.patch import patch
-    patch()
-except ModuleNotFoundError:
-    pass
+# rtb patch is applied lazily when robot_parsing is first imported,
+# not here, to avoid pulling in ~130 MB of roboticstoolbox on every
+# import of motion_stack (e.g. lvl1 processes that only need joint info).

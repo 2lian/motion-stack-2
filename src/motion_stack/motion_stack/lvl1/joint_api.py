@@ -43,6 +43,20 @@ class SensorSyncWarning(Warning):
     pass
 
 
+def make_delta_time():
+    import time
+    last = time.monotonic()
+
+    def elapsed() -> float:
+        nonlocal last
+        now = time.monotonic()
+        dt = now - last
+        last = now
+        return dt
+
+    return elapsed
+
+
 class JointSyncer(ABC):
     r"""One instance controls and syncronises several joints, safely executing trajectory to targets.
 
@@ -155,9 +169,6 @@ class JointSyncer(ABC):
         """Starts executing a speed safe trajectory at the target speeds.
 
         Speed Safe: Moves the joints at a given set speed and keeps them in sync positon-wise.
-
-        Warning:
-            This method is in early developpement and hasn't been thouroughly tested.
 
         Note:
             This sends position commands and not speed commands. This is to avoid dangerous joint runaway if issue arises.
@@ -575,18 +586,21 @@ class AsyncJointSyncer(JointSyncer):
             velocity=np.deg2rad(0.01),
             effort=np.deg2rad(0.001),
         ),
-        batch_time: float = 0.001,
+        batch_time: float = 1/20,
     ) -> None:
         super().__init__(interpolation_delta, on_target_delta)
         self.sensor_input: BaseSub[JStateBatch] = BaseSub()
-        self._pipeline = JointPipeline(self.sensor_input, buffer, batch_time)
+        # self._pipeline = JointPipeline(self.sensor_input, buffer, batch_time)
+        self._buffer = JStateBuffer(buffer)
         self.command_output: BaseSub[JStateBatch] = BaseSub()
-        self._iterator = self._pipeline.buffered_sub.listen()
+        self._iterator = self.sensor_input.listen()
+        self._execute_event = asyncio.Event()
+        self.batch_time = batch_time
 
     async def run(self) -> Coroutine[Any, Any, None]:
         async with asyncio.TaskGroup() as tg:
-            tg.create_task(self._pipeline.run())
             tg.create_task(self._consume_task())
+            tg.create_task(self._execute_task())
 
     def _make_motion(
         self, target: Dict[str, float], toward_func: Callable[[Dict[str, float]], bool]
@@ -601,7 +615,7 @@ class AsyncJointSyncer(JointSyncer):
         Args:
             joints: Joints that one wants to use for a movement
         """
-        async for _ in self._pipeline.buffered_sub.listen():
+        async for _ in self.sensor_input.listen():
             if self.ready(joints)[0]:
                 return
 
@@ -610,9 +624,16 @@ class AsyncJointSyncer(JointSyncer):
 
     @property
     def sensor(self) -> Dict[str, JState]:
-        return self._pipeline.internal_state.accumulated
+        return self._buffer.accumulated
+
+    async def _execute_task(self):
+        while 1:
+            await self._execute_event.wait()
+            await asyncio.sleep(self.batch_time)
+            self.execute()
+            self._execute_event.clear()
 
     async def _consume_task(self):
         async for jsb in self._iterator:
-            # print(jsb)
-            self.execute()
+            self._buffer.push(jsb)
+            self._execute_event.set()

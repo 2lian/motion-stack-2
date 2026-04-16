@@ -1,6 +1,6 @@
 import asyncio
-from copy import deepcopy
 import logging
+from copy import deepcopy
 from dataclasses import dataclass, replace
 from typing import (
     Any,
@@ -73,8 +73,10 @@ class JState:
 
 MultiJState = Union[Dict[str, JState], List[JState], JState]
 
+
 def subdict(d: dict, keys: set):
     return {k: d[k] for k in d.keys() & keys}
+
 
 def multi_to_js_dict(states: MultiJState) -> Dict[str, JState]:
     if isinstance(states, list):
@@ -194,6 +196,7 @@ class JStateBuffer:
     def push(self, states: MultiJState):
         """Pushes data into the buffer"""
         states = multi_to_js_dict(states)
+
         if len(states) == 0:
             return
         not_old = {}
@@ -243,10 +246,10 @@ class JStateBuffer:
             if has_changed:
                 urgent[name] = js
         return urgent
-    
+
     def marked_new(self, delta=None) -> Dict[str, JState]:
         return self._new
-    
+
     def marked_urgent(self, delta=None) -> Dict[str, JState]:
         if delta is None:
             delta = self.delta

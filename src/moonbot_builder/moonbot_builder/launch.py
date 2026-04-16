@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("--viz", action="store_true")
     args = parser.parse_args()
 
-    modules = mega_palet(9)
+    modules = mega_palet(10)
 
     if args.viz:
         run_all(

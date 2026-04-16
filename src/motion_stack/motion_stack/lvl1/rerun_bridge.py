@@ -8,6 +8,7 @@ import rerun.urdf as rr_urdf
 from asyncio_for_robotics import BaseSub
 
 from ..utils.joint_state import JState
+from ._rerun_tf import strip_collision
 from .core import JStateBatch
 
 
@@ -40,6 +41,7 @@ class RerunJointLogger:
     def _setup_urdf(self, urdf: str) -> None:
         if not urdf:
             return
+        urdf = strip_collision(urdf)
         urdf_path = Path(self._temp_dir.name) / "robot.urdf"
         urdf_path.write_text(urdf)
         tree = rr_urdf.UrdfTree.from_file_path(

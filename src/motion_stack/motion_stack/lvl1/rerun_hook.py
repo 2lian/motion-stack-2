@@ -11,6 +11,7 @@ from asyncio_for_robotics import BaseSub
 
 from ..utils.joint_state import JState
 from ..utils.time import Time
+from ._rerun_tf import strip_collision
 from .core import JointCore, JStateBatch
 
 
@@ -62,13 +63,14 @@ class Lvl1RerunHook:
         if self.core.PARAMS.urdf == "":
             return
 
+        urdf_text = strip_collision(self.core.PARAMS.urdf)
         urdf_path = Path(self._temp_dir.name) / "robot.urdf"
-        urdf_path.write_text(self.core.PARAMS.urdf)
-        urdf = rr_urdf.UrdfTree.from_file_path(
+        urdf_path.write_text(urdf_text)
+        tree = rr_urdf.UrdfTree.from_file_path(
             urdf_path, entity_path_prefix=self.assets
         )
-        urdf.log_urdf_to_recording(self.recording)
-        self._urdf_joints = {joint.name: joint for joint in urdf.joints()}
+        tree.log_urdf_to_recording(self.recording)
+        self._urdf_joints = {joint.name: joint for joint in tree.joints()}
 
     async def _sub(self, stream_name: str, sub: BaseSub[JStateBatch]) -> None:
         async for jsb in sub.listen_reliable():

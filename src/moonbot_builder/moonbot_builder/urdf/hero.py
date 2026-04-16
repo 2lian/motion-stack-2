@@ -41,10 +41,10 @@ class HeroArm(Arm, HeroRobot):
 
 
 class HeroArmV1(HeroArm):
-    package_relative_mesh_path = "meshes/hero_7dof_arm/collada/"
-    package_relative_collision_mesh_path = "meshes/hero_7dof_arm/collision/"
+    package_relative_mesh_path = "meshes/hero_7dof_arm/optimized/"
+    package_relative_collision_mesh_path = "meshes/hero_7dof_arm/optimized/"
     jinja_file = "hero_arm_v1.jinja.urdf"
-    mesh_extension = "dae"
+    mesh_extension = "STL"
 
     def __init__(self, limb_number: int, reverse: bool = False):
         super().__init__(limb_number, reverse)
@@ -52,10 +52,10 @@ class HeroArmV1(HeroArm):
 
 
 class HeroArmV2(HeroArm):
-    package_relative_mesh_path = "meshes/hero_7dof_arm_v2/raw/collada/"
-    package_relative_collision_mesh_path = "meshes/hero_7dof_arm_v2/collision/"
+    package_relative_mesh_path = "meshes/hero_7dof_arm_v2/optimized/"
+    package_relative_collision_mesh_path = "meshes/hero_7dof_arm_v2/optimized/"
     jinja_file = "hero_arm_v2.jinja.urdf"
-    mesh_extension = "dae"
+    mesh_extension = "STL"
 
     def __init__(self, limb_number: int, reverse: bool = False):
         super().__init__(limb_number, reverse)
@@ -63,8 +63,8 @@ class HeroArmV2(HeroArm):
 
 
 class HeroArmV3(HeroArm):
-    package_relative_mesh_path = "meshes/hero_7dof_arm_v3/"
-    package_relative_collision_mesh_path = "meshes/hero_7dof_arm_v3/"
+    package_relative_mesh_path = "meshes/hero_7dof_arm_v3/optimized"
+    package_relative_collision_mesh_path = "meshes/hero_7dof_arm_v3/optimized"
     jinja_file = "hero_arm_v3.jinja.urdf"
     mesh_extension = "STL"
 
@@ -77,10 +77,10 @@ class HeroWheel(Wheel, HeroRobot): ...
 
 
 class HeroWheelV1(HeroWheel):
-    package_relative_mesh_path = "meshes/hero_wheel_module/collada/"
-    package_relative_collision_mesh_path = "meshes/hero_wheel_module/collision/"
+    package_relative_mesh_path = "meshes/hero_wheel_module/optimized/"
+    package_relative_collision_mesh_path = "meshes/hero_wheel_module/optimized/"
     jinja_file = "hero_wheel_v1.jinja.urdf"
-    mesh_extension = "dae"
+    mesh_extension = "STL"
 
     def __init__(self, limb_number: int):
         super().__init__(limb_number)
@@ -90,10 +90,10 @@ class HeroWheelV1(HeroWheel):
 
 
 class HeroWheelV2(HeroWheel):
-    package_relative_mesh_path = "meshes/hero_wheel_module_v2/raw/collada/"
-    package_relative_collision_mesh_path = "meshes/hero_wheel_module_v2/collision/"
+    package_relative_mesh_path = "meshes/hero_wheel_module_v2/optimized/"
+    package_relative_collision_mesh_path = "meshes/hero_wheel_module_v2/optimized/"
     jinja_file = "hero_wheel_v2.jinja.urdf"
-    mesh_extension = "dae"
+    mesh_extension = "STL"
 
     def __init__(self, limb_number: int):
         super().__init__(limb_number)

@@ -105,15 +105,10 @@ def reverse_dict(d: Dict) -> Dict:
 
 
 def remap_names(states: List[JState], mapping: NameMap):
-    names_in: List[Optional[str]] = list(map(lambda s: s.name, states))
-    shared = set(names_in) & set(mapping.keys())
-    for name in shared:
-        if name is None:
-            continue
-        ind = names_in.index(name)
-        new_name = mapping.get(name)
+    for s in states:
+        new_name = mapping.get(s.name)
         if new_name is not None:
-            states[ind].name = new_name
+            s.name = new_name
 
 
 def apply_shaper(state: JState, shaper: Shaper):
@@ -129,15 +124,10 @@ def apply_shaper(state: JState, shaper: Shaper):
 
 
 def shape_states(states: List[JState], mapping: StateMap):
-    names_in: List[Optional[str]] = list(map(lambda s: s.name, states))
-    shared = set(names_in) & set(mapping.keys())
-    for name in shared:
-        if name is None:
-            continue
-        ind = names_in.index(name)
-        shaper = mapping.get(name)
+    for s in states:
+        shaper = mapping.get(s.name)
         if shaper is not None:
-            shaper(states[ind])
+            shaper(s)
 
 
 """Apply any function to the input/output of the lvl1 joint core.

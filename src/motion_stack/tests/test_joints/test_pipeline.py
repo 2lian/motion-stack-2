@@ -7,7 +7,7 @@ import pytest
 from asyncio_for_robotics.core._logger import setup_logger
 from asyncio_for_robotics.core.sub import BaseSub
 
-from motion_stack.lvl1_rework import JointPipeline, JStateBatch
+from motion_stack.lvl1.core import JointPipeline, JStateBatch
 from motion_stack.utils.joint_state import JState
 from motion_stack.utils.time import Time
 

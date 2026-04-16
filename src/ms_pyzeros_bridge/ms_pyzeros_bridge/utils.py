@@ -75,12 +75,12 @@ def js_to_cydr(states: Iterable[JState], stamp: Time | None = None) -> list:
                 ),
                 velocity=(
                     np.array([js.velocity for js in jsl], dtype=(np.float64))
-                    if jsl[0].position is not None
+                    if jsl[0].velocity is not None
                     else np.empty(0, dtype=np.float64)
                 ),
                 effort=(
                     np.array([js.effort for js in jsl], dtype=(np.float64))
-                    if jsl[0].position is not None
+                    if jsl[0].effort is not None
                     else np.empty(0, dtype=np.float64)
                 ),
             )

@@ -23,6 +23,9 @@ ros-jazzy-ros2cli = ">=0.32.8,<0.33"
 ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
 
 [feature.pyproject.dependencies]
+setuptools = "*"
+wheel = "*"
+cython = "*"
 zenohd = "*"
 python = "3.13.*"
 uv = "*"
@@ -39,12 +42,13 @@ rerun-sdk = "*"
 motion_stack = { path = "./src/motion_stack/", editable = true }
 ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
 ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
-moonbot_builder= { path = "./src/moonbot_builder/", editable = true }
-hero_assets= { path = "./src/hero_assets/", editable = true }
+moonbot_builder = { path = "./src/moonbot_builder/", editable = true }
+hero_assets = { path = "./src/hero_assets/", editable = true }
 pyzeros = { path = "./../pyzeros2/", editable = true }
 # pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
 asyncio-for-robotics = { git = "ssh://git@github.com/2lian/asyncio-for-robotics.git" }
 uvloop = { git = "https://github.com/MagicStack/uvloop.git" }
+cydr = { path = "./../cydr/", editable = true }
 
 [pypi-options]
 no-build-isolation = [ "uvloop" ]

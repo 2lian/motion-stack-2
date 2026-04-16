@@ -21,6 +21,8 @@ Example:
 from typing import Optional, Tuple
 
 import numpy as np
+from .patch import patch_rtb_numpy_disp
+patch_rtb_numpy_disp()
 import roboticstoolbox as rtb
 from roboticstoolbox.tools.urdf.urdf import URDFType
 from spatialmath import SE3, SO3
