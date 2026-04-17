@@ -15,9 +15,18 @@ async def main():
     scope = afor.Scope.current()
     syncer = AsyncJointSyncer()
 
-    _sh = SubscriberHookJSB(syncer.sensor_input, "joint_read")
-    _ph = PublisherHookJSB(syncer.command_output, "joint_set")
-    _ph.filter = _sh.seen
+    for s, p in [
+        (f"{namespace}/joint_read", f"{namespace}/joint_set")
+        for namespace in ["", "leg1", "leg2", "leg3", "leg4"]
+    ]:
+        _sh = SubscriberHookJSB(syncer.sensor_input, s)
+        _ph = PublisherHookJSB(syncer.command_output, p)
+        _ph.filter = _sh.seen
+        print(
+            "Interfacing with: ",
+            _sh.pyz_sub.fully_qualified_name,
+            _ph.pyz_pub.fully_qualified_name,
+        )
     scope.task_group.create_task(syncer.run())
 
     joints = {f"joint{a}_{b}" for a in range(1, 5) for b in range(1, 4)}

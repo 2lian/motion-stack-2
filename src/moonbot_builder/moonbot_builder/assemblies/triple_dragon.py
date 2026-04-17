@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-from launch_ros.actions import Node
 from scipy.spatial.transform import Rotation
 
 from ..modules.base import RobotModule
@@ -69,7 +68,7 @@ def triple_dragon(
     front_wheel: RobotModule,
     bridge: RobotModule,
     back_wheel: RobotModule,
-) -> List[Node]:
+) -> List[RobotModule]:
     modules = [manip_wheel, manipulator, front_wheel, bridge, back_wheel]
 
     urdf = wrap_in_robot(raw_urdf(*modules))

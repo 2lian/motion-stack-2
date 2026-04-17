@@ -36,7 +36,7 @@ class Lvl1Param:
     joint_buffer: JState = dataclasses.field(
         default_factory=lambda *_: JState(
             name="",
-            time=Time.sn(sec=0.5),
+            time=Time.sn(sec=2),
             position=np.deg2rad(0.05),
             velocity=np.deg2rad(0.01),
             effort=np.deg2rad(0.001),
@@ -46,7 +46,7 @@ class Lvl1Param:
     ignore_limits: bool = False
     limit_margin: float = 0
     batch_time: float = 0.001
-    slow_pub_time: float = 0.5
+    slow_pub_time: float = 10
     continuous_read_hz: float = 24
     drop_ousiders: bool = True
 
@@ -57,8 +57,11 @@ class Lvl1Param:
     def from_json(cls, json_str: str) -> Self:
         j_dic = ujson.loads(json_str)
         urdf = j_dic.get("urdf", "")
-        if urdf and Path(urdf).is_file():
-            j_dic["urdf"] = Path(urdf).read_text()
+        try:
+            if urdf and Path(urdf).is_file():
+                j_dic["urdf"] = Path(urdf).read_text()
+        except OSError:
+            pass
         return dacite.from_dict(cls, j_dic, dacite.Config())
 
 
@@ -89,9 +92,13 @@ class JointPipeline:
         self._batch_time: float = batch_time
         self._queue_size = int(2e2)
         #: Rate at which to publish non-urgent states
-        self.slow_rate: float = (
-            1 / buffer_delta.time.sec if buffer_delta.time is not None else 1
-        )
+        self.slow_rate: float
+        if buffer_delta.time is None:
+            self.slow_rate: float = 1
+        elif buffer_delta.time.nano < 1:
+            self.slow_rate: float = 1
+        else:
+            self.slow_rate: float = 1 / (buffer_delta.time.sec + 1)
 
         #: Subscription providing raw incoming joint state batches.
         self.input_sub: BaseSub[JStateBatch] = input_sub
@@ -421,7 +428,6 @@ class JointCore:
         )
         self.sensor_pipeline.pre_process = self.sensor_preproc
         self.sensor_pipeline.post_process = self.sensor_postproc
-        self.sensor_pipeline.slow_rate = 1 / self.PARAMS.slow_pub_time
 
     async def sensor_preproc(self, jsb: JStateBatch) -> JStateBatch:
         jsb = self.lvl0_remap.unmap(jsb)
@@ -443,7 +449,6 @@ class JointCore:
         )
         self.command_pipeline.pre_process = self.command_preproc
         self.command_pipeline.post_process = self.command_postproc
-        self.command_pipeline.slow_rate = 1 / self.PARAMS.slow_pub_time
 
     async def command_preproc(self, jsb: JStateBatch) -> JStateBatch:
         jsb = self.lvl2_remap.unmap(jsb)
