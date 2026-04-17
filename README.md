@@ -25,10 +25,10 @@ pixi run python -c "from ms_moonbot_zero import load_moonbot_zero_urdf; \
 
 # run the robot
 pixi run python -m ms_pyzeros_bridge.lvl1_exec \
-  --ms-lvl1-json '{"urdf": "/tmp/mz.urdf"}'
+  --ms-lvl1-json '{"urdf": "/home/elian/ssf-gazebo/compiled.urdf"}'
 
 # (other terminal) visualize in rerun
-pixi run python -m ms_pyzeros_bridge.rerun_viz --urdf /tmp/mz.urdf
+pixi run python -m ms_pyzeros_bridge.rerun_viz --urdf /home/elian/ssf-gazebo/compiled.urdf
 ```
 
 Works with any URDF. The `urdf` field accepts a file path or string.
@@ -49,7 +49,7 @@ pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/robot_demo.py --rerun
 ```
 
 > [!NOTE]
-> Shortcut: `pixi run mz_robot`
+> Shortcut: `pixi run mz_robot` / `pixi run mz_robot --rerun`
 
 > [!TIP]
 > The robot starts idle. Send commands with the API client below, or with ROS 2 CLI:
@@ -74,7 +74,7 @@ pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/mz_launcher.py --viz
 ```
 
 > [!NOTE]
-> Shortcut: `pixi run mz_launcher`
+> Shortcut: `pixi run mz_launcher` / `pixi run mz_launcher --viz`
 
 Each leg publishes on its own namespace (`leg1/joint_read`, `leg2/joint_read`, etc.).
 
