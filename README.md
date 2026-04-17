@@ -25,10 +25,10 @@ pixi run python -c "from ms_moonbot_zero import load_moonbot_zero_urdf; \
 
 # run the robot
 pixi run python -m ms_pyzeros_bridge.lvl1_exec \
-  --ms-lvl1-json '{"urdf": "/home/elian/ssf-gazebo/compiled.urdf"}'
+  --ms-lvl1-json '{"urdf": "/tmp/mz.urdf"}'
 
 # (other terminal) visualize in rerun
-pixi run python -m ms_pyzeros_bridge.rerun_viz --urdf /home/elian/ssf-gazebo/compiled.urdf
+pixi run python -m ms_pyzeros_bridge.rerun_viz --urdf /tmp/mz.urdf
 ```
 
 Works with any URDF. The `urdf` field accepts a file path or string.
