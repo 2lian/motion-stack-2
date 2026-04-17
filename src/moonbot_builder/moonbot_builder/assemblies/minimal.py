@@ -1,9 +1,7 @@
 from typing import List
+
 import numpy as np
-
 from scipy.spatial.transform import Rotation
-
-from launch_ros.actions import Node
 
 from ..modules.base import RobotModule
 from ..urdf.base import Joint, Link, wrap_in_robot
@@ -49,7 +47,7 @@ def minimal(
     arm: RobotModule,
     wheel: RobotModule,
     base_link_name: str = "base_link",
-) -> List[Node]:
+) -> List[RobotModule]:
     modules = [arm, wheel]
 
     urdf = wrap_in_robot(raw_urdf(*modules, base_link_name=base_link_name))

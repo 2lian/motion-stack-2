@@ -30,6 +30,7 @@ from typing import (
 import nptyping as nt
 import numpy as np
 from asyncio_for_robotics import BaseSub
+import asyncio_for_robotics as afor
 from nptyping import NDArray, Shape
 
 from motion_stack.utils.time import Time
@@ -586,14 +587,14 @@ class AsyncJointSyncer(JointSyncer):
             velocity=np.deg2rad(0.01),
             effort=np.deg2rad(0.001),
         ),
-        batch_time: float = 1/20,
+        batch_time: float = 1/100,
     ) -> None:
         super().__init__(interpolation_delta, on_target_delta)
         self.sensor_input: BaseSub[JStateBatch] = BaseSub()
         # self._pipeline = JointPipeline(self.sensor_input, buffer, batch_time)
         self._buffer = JStateBuffer(buffer)
         self.command_output: BaseSub[JStateBatch] = BaseSub()
-        self._iterator = self.sensor_input.listen()
+        self._iterator = self.sensor_input.listen_reliable(queue_size=1000)
         self._execute_event = asyncio.Event()
         self.batch_time = batch_time
 
@@ -626,10 +627,12 @@ class AsyncJointSyncer(JointSyncer):
     def sensor(self) -> Dict[str, JState]:
         return self._buffer.accumulated
 
+    @afor.scoped
     async def _execute_task(self):
         while 1:
             await self._execute_event.wait()
             await asyncio.sleep(self.batch_time)
+        # async for tns in afor.Rate(20).listen():
             self.execute()
             self._execute_event.clear()
 

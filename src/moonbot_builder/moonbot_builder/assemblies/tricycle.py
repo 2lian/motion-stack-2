@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 import numpy as np
-from launch_ros.actions import Node
 from scipy.spatial.transform import Rotation
 
 from ..modules.base import RobotModule
@@ -178,7 +177,7 @@ def tricycle(
     central_body: RobotModule,
     manipulator: Optional[RobotModule] = None,
     base_link_name: str = "base_link_tricycle",
-) -> List[Node]:
+) -> List:
 
     modules = [
         front_wheel,

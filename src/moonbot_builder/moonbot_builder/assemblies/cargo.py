@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-from launch_ros.actions import Node
 from scipy.spatial.transform import Rotation
 
 from ..modules.base import RobotModule
@@ -90,7 +89,7 @@ def cargo(
     right_arm: RobotModule,
     cargo_box: RobotModule,
     base_link_name: str = "base_link",
-) -> List[Node]:
+) -> List[RobotModule]:
     """Create launch nodes for cargo configuration"""
     modules = [left_wheel, right_wheel, left_arm, right_arm, cargo_box]
 

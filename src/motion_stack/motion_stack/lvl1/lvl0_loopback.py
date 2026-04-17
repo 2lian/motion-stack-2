@@ -29,7 +29,7 @@ class LoopBack:
             tg.create_task(self._send_back())
 
     async def _consume(self):
-        async for msg in self.lvl1_ouput.listen():
+        async for msg in self.lvl1_ouput.listen_reliable(queue_size=2000):
             names = msg.keys()
             already_there = self.states.accumulated.keys()
             new = names - already_there

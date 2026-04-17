@@ -24,17 +24,28 @@ from ms_pyzeros_bridge.lvl1_pyzeros import (
 
 
 @afor.scoped
-async def run_leg(urdf: str):
+async def main(urdf: str):
     scope = afor.Scope.current()
-    rr.init("motion_stack")
+    from urllib.parse import quote
+
+    rec = rr.RecordingStream(
+        "motion_stack",
+        # batcher_config=rr.ChunkBatcherConfig(flush_tick=1.0),
+    )
+    rr.set_global_data_recording(rec)
     rr.save("./rerun_viz.rrd")
-    # rr.connect_grpc()
+    server_uri = rr.serve_grpc()
+    web_port = 9090
+    rr.serve_web_viewer(web_port=web_port, connect_to=server_uri, open_browser=False)
+    viewer_url = f"http://localhost:{web_port}/?url={quote(server_uri, safe='')}"
+    print(f"\n[rerun] web viewer: {viewer_url}")
+    print(f"[rerun] native app: rerun --connect {server_uri}\n", flush=True)
     joint_logger = RerunJointLogger(urdf)
     main_sub: BaseSub[JStateBatch] = BaseSub()
     buffer = JStateBuffer(
         JState(
             name="",
-            time=Time.sn(sec=10),
+            time=Time.sn(sec=2),
             position=np.deg2rad(0.05),
             velocity=np.deg2rad(0.01),
             effort=np.deg2rad(0.001),
@@ -43,12 +54,14 @@ async def run_leg(urdf: str):
     main_sub.asap_callback.append(lambda jsb: buffer.push(jsb))
 
     SubscriberHookJSB(main_sub, "/continuous_joint_read")
+
     async def fast():
-        async for tns in afor.Rate(20).listen():
-            joint_logger.sub.input_data(buffer.pull_urgent())
+        async for tns in afor.Rate(30).listen():
+            joint_logger.sub.input_data(buffer.pull_new())
 
     async def slow():
-        async for tns in afor.Rate(1/10).listen():
+        return
+        async for tns in afor.Rate(1/2).listen():
             joint_logger.sub.input_data(buffer.pull_new())
 
     scope.task_group.create_task(fast())
@@ -65,8 +78,11 @@ if __name__ == "__main__":
     parser.add_argument("--urdf", required=False, default=None)
     args = parser.parse_args()
     urdf = args.urdf
-    if urdf and Path(urdf).is_file():
-        urdf = Path(urdf).read_text()
+    try:
+        if urdf and Path(urdf).is_file():
+            urdf = Path(urdf).read_text()
+    except OSError:
+        pass
     with suppress(KeyboardInterrupt):
         with pyzeros.auto_context(node="rerun_viz"):
-            uvloop.run(run_leg(urdf))
+            uvloop.run(main(urdf))

@@ -1,15 +1,11 @@
 import asyncio
 from contextlib import suppress
-from importlib.resources import as_file, files
-import os
 
 import asyncio_for_robotics.zenoh as afor
 import pyzeros
 import uvloop
-from jinja2 import Template
 from motion_stack.lvl1.core import JointCore, Lvl1Param
 from motion_stack.lvl1.lvl0_loopback import LoopBack
-from motion_stack.lvl1.rerun_hook import Lvl1RerunHook
 
 from ms_pyzeros_bridge.lvl1_pyzeros import (
     Lvl1Services,
@@ -24,15 +20,18 @@ async def run_leg(params: Lvl1Param, rerun=False):
     core = JointCore(params)
 
     if rerun:
-        import rerun as rr
+        import os
 
-        rr.init(pyzeros.auto_session().fully_qualified_name)
+        from motion_stack.lvl1.rerun_hook import start_rerun_hook
+
+        bag_name = pyzeros.auto_session().fully_qualified_name
         os.makedirs("./bag", exist_ok=True)
-        rr.save(
-            f"./bag/{pyzeros.auto_session().fully_qualified_name.replace("/","_")}.rrd"
+        start_rerun_hook(
+            scope,
+            core,
+            name=bag_name,
+            save_path=f"./bag/{bag_name.replace('/', '_')}.rrd",
         )
-        rr_hook = Lvl1RerunHook(core)
-        scope.task_group.create_task(rr_hook.run())
 
     lo = LoopBack(core)
 

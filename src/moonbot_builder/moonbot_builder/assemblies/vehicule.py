@@ -1,7 +1,5 @@
 from typing import List
 
-from launch_ros.actions import Node
-
 from ..modules.base import RobotModule
 from ..urdf.base import Joint, Link, wrap_in_robot
 from .utils import link_urdf_nodes
@@ -36,7 +34,7 @@ def vehicule(
     bridge: RobotModule,
     back_wheel: RobotModule,
     base_link_name: str = "base_link",
-) -> List[Node]:
+) -> List[RobotModule]:
     modules = [front_wheel, bridge, back_wheel]
 
     urdf = wrap_in_robot(raw_urdf(*modules, base_link_name=base_link_name))
