@@ -19,6 +19,30 @@ Communication uses [pyzeros](https://github.com/2lian/pyzeros2) -- real ROS 2
 topics over zenoh, fully interoperable with rclpy, rviz, rosbag, etc.
 No ROS installation required.
 
+### Quick start: run from the terminal
+
+The fastest way to get your robot running -- no Python code needed.
+Compile the URDF to a file, then launch `lvl1_exec` with a JSON string:
+
+```bash
+# step 1: compile the Moonbot Zero URDF from its jinja template
+pixi run python -c "from ms_moonbot_zero import load_moonbot_zero_urdf; \
+  open('/tmp/mz.urdf','w').write(load_moonbot_zero_urdf())"
+
+# step 2: run a single node with all joints
+pixi run python -m ms_pyzeros_bridge.lvl1_exec \
+  --ms-lvl1-json '{"urdf": "/tmp/mz.urdf"}'
+
+# step 3 (other terminal): start the rerun visualizer
+pixi run python -m ms_pyzeros_bridge.rerun_viz --urdf /tmp/mz.urdf
+```
+
+This works with any URDF, not just the Moonbot Zero. The `urdf` field accepts
+either a file path or the URDF string directly. Mesh paths inside the URDF
+must use absolute URIs (`file:///home/user/meshes/link.stl`) instead of
+ROS package URIs (`package://my_robot/meshes/link.stl`), since there is no
+`ament_index` to resolve packages at runtime.
+
 ### Single-process robot (`robot_demo.py`)
 
 Runs the full robot in a single process. This is the low-level approach: you
@@ -40,6 +64,21 @@ pixi run mz_robot --rerun
 
 Publishes joint state on `joint_read` and `/continuous_joint_read`.
 Receives commands on `joint_set`.
+
+The robot starts idle -- no motion until you send commands. You can use the
+API client (see below), or interact directly with ROS 2 CLI tools:
+
+```bash
+# list available topics
+ros2 topic list
+
+# listen to joint state
+ros2 topic echo /joint_read
+
+# send a command to move joints (position in radians)
+ros2 topic pub /joint_set sensor_msgs/msg/JointState \
+  "{name: ['joint1_1', 'joint1_2'], position: [0.5, -0.3]}"
+```
 
 ### Multi-process launcher (`mz_launcher.py`)
 
