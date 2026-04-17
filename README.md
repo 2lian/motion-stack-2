@@ -44,8 +44,8 @@ yourself. Use this when you need custom hardware drivers, processing hooks,
 or a different transport.
 
 ```bash
-pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/robot_demo.py
-pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/robot_demo.py --rerun
+pixi run python -m ms_moonbot_zero.robot_demo
+pixi run python -m ms_moonbot_zero.robot_demo --rerun
 ```
 
 > [!NOTE]
@@ -69,8 +69,8 @@ process each. Use this when the defaults work and you just need to configure
 and launch.
 
 ```bash
-pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/mz_launcher.py
-pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/mz_launcher.py --viz
+pixi run python -m ms_moonbot_zero.mz_launcher
+pixi run python -m ms_moonbot_zero.mz_launcher --viz
 ```
 
 > [!NOTE]
@@ -85,11 +85,11 @@ This is what application code looks like.
 
 ```bash
 # terminal 1: start the robot
-pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/robot_demo.py
-# or: pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/mz_launcher.py
+pixi run python -m ms_moonbot_zero.robot_demo
+# or: pixi run python -m ms_moonbot_zero.mz_launcher
 
 # terminal 2: start the API client
-pixi run python ./src/ms_moonbot_zero/ms_moonbot_zero/api_demo.py
+pixi run python -m ms_moonbot_zero.api_demo
 ```
 
 > [!NOTE]
