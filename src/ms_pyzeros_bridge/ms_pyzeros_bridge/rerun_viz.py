@@ -30,7 +30,7 @@ async def main(urdf: str):
 
     rec = rr.RecordingStream(
         "motion_stack",
-        batcher_config=rr.ChunkBatcherConfig(flush_tick=1.0),
+        # batcher_config=rr.ChunkBatcherConfig(flush_tick=1.0),
     )
     rr.set_global_data_recording(rec)
     rr.save("./rerun_viz.rrd")

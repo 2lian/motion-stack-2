@@ -1,26 +1,22 @@
 [workspace]
-authors = ["Neppel Elian <elian.neppel@posteo.eu>"]
-channels = ["conda-forge"]
+authors = [ "Neppel Elian <elian.neppel@posteo.eu>" ]
+channels = [ "conda-forge" ]
 name = "motion-stack-2"
-platforms = ["linux-64"]
+platforms = [ "linux-64" ]
 version = "0.1.0"
 
 [tasks]
 router = "RUST_LOG=debug zenohd -c ./router.json5"
 mz_robot = "python ./src/ms_moonbot_zero/ms_moonbot_zero/robot_demo.py"
 mz_api = "python ./src/ms_moonbot_zero/ms_moonbot_zero/api_demo.py"
-mz_launcher = "python ./src/ms_moonbot_zero/ms_moonbot_zero/mz_launcher.py" 
+mz_launcher = "python ./src/ms_moonbot_zero/ms_moonbot_zero/mz_launcher.py"
 mh_launcher = "python -m moonbot_builder.launch"
-mh_api = "python ./src/ms_pyzeros_bridge/ms_pyzeros_bridge/pyzeros_api_demo.py" 
-
+mh_api = "python ./src/ms_pyzeros_bridge/ms_pyzeros_bridge/pyzeros_api_demo.py"
 
 ## # ROS 2 Jazzy ####
 # isolated. For asserting interop with normal ROS 2
 [feature.jazzy]
-channels = ["https://prefix.dev/robostack-jazzy"]
-
-[feature.jazzy.tasks]
-foxglove_bridge = "ros2 launch foxglove_bridge foxglove_bridge_launch.xml"
+channels = [ "https://prefix.dev/robostack-jazzy" ]
 
 [feature.jazzy.dependencies]
 python = "*"
@@ -30,6 +26,9 @@ ros-jazzy-ros-core = ">=0.11.0,<0.12"
 ros-jazzy-ros2cli = ">=0.32.8,<0.33"
 ros-jazzy-rmw-zenoh-cpp = ">=0.2.9,<0.3"
 ros-jazzy-rosbag2 = ">=0.26.9,<0.27"
+
+[feature.jazzy.tasks]
+foxglove_bridge = "ros2 launch foxglove_bridge foxglove_bridge_launch.xml"
 
 [feature.pyproject.dependencies]
 setuptools = "<68"
@@ -52,21 +51,22 @@ motion_stack = { path = "./src/motion_stack/", editable = true }
 ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
 ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
 moonbot_builder = { path = "./src/moonbot_builder/", editable = true }
-hero_assets_py = { path = "./src/hero_assets_py/", editable = true }
+# hero_assets_py = { path = "./src/hero_assets_py/", editable = true }
+hero_assets_py = { git = "ssh://git@github.com/Space-Robotics-Laboratory/hero_assets_py.git" }
 # pyzeros = { path = "./../pyzeros2/", editable = true }
 pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }
 asyncio-for-robotics = { git = "ssh://git@github.com/2lian/asyncio-for-robotics.git" }
 uvloop = { git = "https://github.com/MagicStack/uvloop.git" }
 cydr = "*"
-# cydr = { path = "./../cydr/", editable = true }
 
+# cydr = { path = "./../cydr/", editable = true }
 [pypi-options]
-no-build-isolation = ["uvloop"]
+no-build-isolation = [ "uvloop" ]
 
 # nvim = ">=0.11.0,<0.12"
 [environments]
-default = { features = ["pyproject"] }
-ros = { features = ["jazzy"] }
+default = { features = [ "pyproject" ] }
+ros = { features = [ "jazzy" ] }
 
 ## # Env variables ###
 [activation.env]

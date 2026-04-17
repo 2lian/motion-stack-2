@@ -191,6 +191,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3b/21/2f728888c45033d34a417bfcd248ea2564c9e08ab1bfd301377cf05d5586/filelock-3.28.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e2/98/8b1e801939839d405f1f122e7d175cebe9aeb4e114f95bfc45e3152af9a7/fonttools-4.62.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/82/34/4bca11f0b34ba914db4a9d967ac98c28d361122869c07983760b88df92ff/gogo_keyboard-1.0.3-py3-none-any.whl
+      - pypi: git+ssh://git@github.com/Space-Robotics-Laboratory/hero_assets_py.git#bab406ce54845187619f1fa5f145536349e58ff2
       - pypi: https://files.pythonhosted.org/packages/46/33/92ef41c6fad0233e41d3d84ba8e8ad18d1780f1e5d99b3c683e6d7f98b63/identify-2.6.18-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2b/0a/7b98e1e119878a27ba8618ca1e18b14f992ff1eda40f47bccccf4de44121/kiwisolver-1.5.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
@@ -223,7 +224,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/bd/28/0a25ee5342eb5d5f297d992a77e56892ecb65e7854c7898fb7d35e9b33bd/websockets-16.0-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/93/6b/3fcfd8589d0e319f5fb56f105acbe791198fd36bb54469a91fbe49d828c4/xacro-2.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5e/1e/3c3d3ef071b051cc3abbe3721ffb8365033a172613c04af2da89d5548a87/xxhash-3.6.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
-      - pypi: ./src/hero_assets_py
       - pypi: ./src/moonbot_builder
       - pypi: ./src/motion_stack
       - pypi: ./src/ms_moonbot_zero
@@ -1448,10 +1448,9 @@ packages:
   license_family: BSD
   size: 416610
   timestamp: 1748320117187
-- pypi: ./src/hero_assets_py
+- pypi: git+ssh://git@github.com/Space-Robotics-Laboratory/hero_assets_py.git#bab406ce54845187619f1fa5f145536349e58ff2
   name: hero-assets-py
   version: 0.1.0
-  sha256: 27b92132146d780b69e42c2105c1c2bccd42026797dfea93628dfafdec1f1ffa
   requires_python: '>=3.8'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-78.3-h33c6efd_0.conda
   sha256: fbf86c4a59c2ed05bbffb2ba25c7ed94f6185ec30ecb691615d42342baa1a16a

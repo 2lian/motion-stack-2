@@ -55,7 +55,10 @@ Shows how to:
 - Use the default `lvl1_exec` executable provided by `ms_pyzeros_bridge`
 
 ```bash
+# terminal 1: start the robot
 pixi run mz_launcher
+
+# terminal 2: rerun visualization
 pixi run mz_launcher --viz
 ```
 
