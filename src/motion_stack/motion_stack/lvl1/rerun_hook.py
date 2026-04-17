@@ -177,3 +177,38 @@ class Lvl1RerunHook:
         if isinstance(value, str) and value == "":
             return "null"
         return value
+
+
+def start_rerun_hook(
+    scope,
+    core: JointCore,
+    *,
+    name: str = "motion_stack",
+    web_port: int = 9090,
+    save_path: str | None = None,
+) -> Lvl1RerunHook:
+    """Initialize rerun, serve a web viewer, and start the Lvl1RerunHook.
+
+    Args:
+        scope: The current afor.Scope.
+        core: The JointCore to hook into.
+        name: Rerun application/recording name.
+        web_port: Port for the web viewer.
+        save_path: Optional path to save the .rrd file.
+
+    Returns:
+        The Lvl1RerunHook instance.
+    """
+    from urllib.parse import quote
+
+    rr.init(name)
+    if save_path is not None:
+        rr.save(save_path)
+    server_uri = rr.serve_grpc()
+    rr.serve_web_viewer(web_port=web_port, connect_to=server_uri, open_browser=False)
+    viewer_url = f"http://localhost:{web_port}/?url={quote(server_uri, safe='')}"
+    print(f"\n[rerun] web viewer: {viewer_url}")
+    print(f"[rerun] native app: rerun --connect {server_uri}\n", flush=True)
+    hook = Lvl1RerunHook(core)
+    scope.task_group.create_task(hook.run())
+    return hook

@@ -60,22 +60,22 @@ if __name__ == "__main__":
     parser.add_argument("--viz", action="store_true")
     args = parser.parse_args()
 
-    # hero_urdf.DEFAULT_MESH_TYPE = MESH_TYPE.OPTI
-    # modules = mega_palet(10)
+    hero_urdf.DEFAULT_MESH_TYPE = MESH_TYPE.OPTI
+    modules = mega_palet(40)
 
     # modules = dragon(MhArmV1(1), MhWheelV1(1), MhArmV3(1), MhWheelV3(1))
     # modules = triple_dragon(
     #     MhWheelV2(1), MhArmV1(1), MhWheelV1(1), MhArmV3(1), MhWheelV3(1)
     # )
-    modules = tricycle(
-        MhWheelV3(1),
-        MhWheelV3(2),
-        MhWheelV3(3),
-        MhArmV3(1),
-        MhArmV3(2),
-        MhArmV3(3),
-        MhBody(1)
-    )
+    # modules = tricycle(
+    #     MhWheelV3(1),
+    #     MhWheelV3(2),
+    #     MhWheelV3(3),
+    #     MhArmV3(1),
+    #     MhArmV3(2),
+    #     MhArmV3(3),
+    #     MhBody(1)
+    # )
 
     if args.viz:
         run_all(

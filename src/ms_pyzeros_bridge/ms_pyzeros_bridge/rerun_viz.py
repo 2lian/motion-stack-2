@@ -28,7 +28,11 @@ async def main(urdf: str):
     scope = afor.Scope.current()
     from urllib.parse import quote
 
-    rr.init("motion_stack")
+    rec = rr.RecordingStream(
+        "motion_stack",
+        batcher_config=rr.ChunkBatcherConfig(flush_tick=1.0),
+    )
+    rr.set_global_data_recording(rec)
     rr.save("./rerun_viz.rrd")
     server_uri = rr.serve_grpc()
     web_port = 9090

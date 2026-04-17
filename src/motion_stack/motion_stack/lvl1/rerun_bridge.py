@@ -36,6 +36,7 @@ class RerunJointLogger:
 
         self._temp_dir = TemporaryDirectory(prefix="motion_stack_rerun_bridge_")
         self._urdf_joints: dict[str, rr_urdf.UrdfJoint] = {}
+        self._prev_positions: dict[str, float] = {}
         self._setup_urdf(urdf)
 
     def _setup_urdf(self, urdf: str) -> None:
@@ -56,41 +57,50 @@ class RerunJointLogger:
         self._log_tf_batch(jsb)
 
     def _log_batch(self, jsb: JStateBatch) -> None:
-        for joint_name, joint_state in jsb.items():
-            joint_root = f"{self.joints}/{joint_name}"
-            rr.log(
-                joint_root,
-                rr.AnyValues(
-                    name=joint_name,
-                    timestamp=(
-                        int(joint_state.time.nano)
-                        if joint_state.time is not None
-                        else None
-                    ),
-                    position=(
-                        float(joint_state.position)
-                        if joint_state.position is not None
-                        else None
-                    ),
-                    velocity=(
-                        float(joint_state.velocity)
-                        if joint_state.velocity is not None
-                        else None
-                    ),
-                    effort=(
-                        float(joint_state.effort)
-                        if joint_state.effort is not None
-                        else None
-                    ),
-                ),
-                recording=self.recording,
+        if not jsb:
+            return
+        names = []
+        timestamps = []
+        positions = []
+        velocities = []
+        efforts = []
+        for joint_name, js in jsb.items():
+            names.append(joint_name)
+            timestamps.append(
+                int(js.time.nano) if js.time is not None else None
             )
+            positions.append(
+                float(js.position) if js.position is not None else None
+            )
+            velocities.append(
+                float(js.velocity) if js.velocity is not None else None
+            )
+            efforts.append(
+                float(js.effort) if js.effort is not None else None
+            )
+        rr.log(
+            self.joints,
+            rr.AnyValues(
+                name=names,
+                timestamp=timestamps,
+                position=positions,
+                velocity=velocities,
+                effort=efforts,
+            ),
+            recording=self.recording,
+        )
 
     def _log_tf_batch(self, jsb: JStateBatch) -> None:
         for joint_name, joint_state in jsb.items():
             position = joint_state.position
+            if position is None:
+                continue
+            prev = self._prev_positions.get(joint_name)
+            if prev is not None and prev == position:
+                continue
+            self._prev_positions[joint_name] = position
             urdf_joint = self._urdf_joints.get(joint_name)
-            if position is None or urdf_joint is None:
+            if urdf_joint is None:
                 continue
             rr.log(
                 self.tf,
