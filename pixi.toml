@@ -50,6 +50,7 @@ rerun-sdk = "*"
 motion_stack = { path = "./src/motion_stack/", editable = true }
 ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
 ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
+ms_zenoh_bridge = { path = "./src/ms_zenoh_bridge/", editable = true }
 moonbot_builder = { path = "./src/moonbot_builder/", editable = true }
 # hero_assets_py = { path = "./src/hero_assets_py/", editable = true }
 hero_assets_py = { git = "ssh://git@github.com/Space-Robotics-Laboratory/hero_assets_py.git" }
