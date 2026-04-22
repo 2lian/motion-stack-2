@@ -1,0 +1,32 @@
+[project]
+name = "ms_zenoh_bridge"
+version = "0.0.1"
+description = "TODO"
+readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Shamistan KARIMOV", email = "ahresgg@gmail.com" }
+]
+requires-python = ">=3.10,<3.15"
+
+dependencies = [
+"motion_stack",
+]
+
+[build-system]
+requires = ["setuptools >= 58.2.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ms_zenoh_bridge", "ms_zenoh_bridge.*"]
+
+[tool.setuptools.package-data]
+"ms_zenoh_bridge" = [
+  "py.typed",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+
