@@ -4,8 +4,8 @@ from collections.abc import Iterable
 import msgspec
 import numpy as np
 from motion_stack.lvl1.core import JStateBatch
-from motion_stack.lvl1.core import Time as TimeMS
 from motion_stack.utils.joint_state import JState
+from motion_stack.utils.time import Time as TimeMS
 
 
 class WireJState(msgspec.Struct, array_like=True):
