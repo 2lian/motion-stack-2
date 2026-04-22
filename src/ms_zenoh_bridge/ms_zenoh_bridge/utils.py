@@ -2,6 +2,7 @@ import time
 from collections.abc import Iterable
 
 import msgspec
+import numpy as np
 from motion_stack.lvl1.core import JStateBatch
 from motion_stack.lvl1.core import Time as TimeMS
 from motion_stack.utils.joint_state import JState
@@ -34,9 +35,9 @@ def jsb_to_wire(states: Iterable[JState], stamp: TimeMS | None = None) -> bytes:
         states=[
             WireJState(
                 name=js.name,
-                position=js.position,
-                velocity=js.velocity,
-                effort=js.effort,
+                position=_py(js.position),
+                velocity=_py(js.velocity),
+                effort=_py(js.effort),
             )
             for js in states
         ],
@@ -57,3 +58,9 @@ def wire_to_jsb(payload: bytes) -> JStateBatch:
         )
         for s in msg.states
     }
+
+
+def _py(v):
+    if isinstance(v, np.generic):
+        return v.item()
+    return v
