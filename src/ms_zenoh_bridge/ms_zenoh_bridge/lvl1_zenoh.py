@@ -78,6 +78,8 @@ class SubscriberHookJSB:
             session: zenoh session. Resolved from context if omitted.
         """
         self.seen = set()
+        self.joint_last_seen: dict[str, int] = {}
+        self.last_sample_ns = time.time_ns()
         self._base_sub = sub
         self.z_sub = afor_zenoh.Sub(topic, session=session, scope=scope)
         self._init_scope(scope)
@@ -97,5 +99,13 @@ class SubscriberHookJSB:
 
     def _convert_forward(self, sample: zenoh.Sample):
         jsb = wire_to_jsb(bytes(sample.payload))
-        self.seen.update(jsb.keys())
+
+        now = time.time_ns()
+        self.last_sample_ns = now
+
+        keys = set(jsb.keys())
+        self.seen.update(keys)
+        for k in keys:
+            self.joint_last_seen[k] = now
+
         self._base_sub._input_data_asyncio(jsb)
