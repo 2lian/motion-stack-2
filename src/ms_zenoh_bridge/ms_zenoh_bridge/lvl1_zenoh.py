@@ -33,8 +33,13 @@ class PublisherHookJSB:
         self.session = afor_zenoh.auto_session(session)
         self.topic = topic
         self.z_pub = self.session.declare_publisher(topic)
+        self._init_scope(scope)
         self.declare()
-        self._scope = afor.Scope.current() if scope is _AUTO_SCOPE else scope
+
+    def _init_scope(self, scope: afor.Scope | None | object = _AUTO_SCOPE):
+        if scope is _AUTO_SCOPE:
+            scope = afor.Scope.current(default=None)
+        self._scope = scope
 
     def declare(self):
         self._base_sub.asap_callback.append(self._convert_publish)
@@ -74,14 +79,14 @@ class SubscriberHookJSB:
         """
         self.seen = set()
         self._base_sub = sub
-
         self.z_sub = afor_zenoh.Sub(topic, session=session, scope=scope)
-
         self._init_scope(scope)
         self._declare()
 
-    def _init_scope(self, scope):
-        self._scope = afor.Scope.current() if scope is _AUTO_SCOPE else scope
+    def _init_scope(self, scope: afor.Scope | None | object = _AUTO_SCOPE):
+        if scope is _AUTO_SCOPE:
+            scope = afor.Scope.current(default=None)
+        self._scope = scope
 
     def _declare(self):
         self.z_sub.asap_callback.append(self._convert_forward)
@@ -91,9 +96,6 @@ class SubscriberHookJSB:
         self.z_sub.close()
 
     def _convert_forward(self, sample: zenoh.Sample):
-        payload = bytes(sample.payload)
-
-        jsb = wire_to_jsb(payload)
-
+        jsb = wire_to_jsb(bytes(sample.payload))
         self.seen.update(jsb.keys())
         self._base_sub._input_data_asyncio(jsb)
