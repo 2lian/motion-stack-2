@@ -95,7 +95,7 @@ async def main():
 
         for _sub, _pub in pub_found.values():
             for joint, ts in _sub.joint_last_seen.items():
-                if (now - ts) / 1e9 <= JOINT_TTL_S:
+                if (now - ts) / 1e9 <= TIMEOUT_S:
                     current.add(joint)
 
         if alive_joints == current:
