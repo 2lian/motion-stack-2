@@ -30,10 +30,8 @@ from asyncio_for_robotics import BaseSub
 from motion_stack.utils.hypersphere_clamp import clamp_multi_xyz_quat, fuse_xyz_quat
 from motion_stack.utils.math import Flo3, Quaternion, qt, qt_normalize
 from motion_stack.utils.pose import Pose, VelPose, XyzQuat
+from motion_stack.utils.pose_state import LimbNumber, MultiPose, PoseBuffer
 from motion_stack.utils.time import Time
-
-LimbNumber: TypeAlias = int
-MultiPose: TypeAlias = dict[LimbNumber, Pose]
 
 
 class SensorSyncWarning(Warning):
@@ -472,29 +470,9 @@ class IkSyncer(ABC):
 class AsyncIkSyncer(IkSyncer):
     """Async BaseSub implementation of IkSyncer.
 
-    This is an API/client-side helper.
+    lvl2_output.tip_pos  -> fk_feedback_input
+    ik_target_output     -> lvl2_input.set_ik
 
-    It does NOT run lvl2 IKCore.
-
-    Client-side wiring:
-
-        lvl2 output.tip_pos  -> fk_feedback_input
-        ik_target_output     -> lvl2 input.set_ik
-
-    Meaning:
-
-        fk_feedback_input:
-            End-effector FK feedback coming FROM lvl2.
-            Type: BaseSub[MultiPose]
-
-        ik_target_output:
-            Cartesian IK targets going TO lvl2.
-            Type: BaseSub[MultiPose]
-
-    Backward-compatible aliases:
-
-        sensor_input == fk_feedback_input
-        command_output == ik_target_output
     """
 
     def __init__(
@@ -504,28 +482,12 @@ class AsyncIkSyncer(IkSyncer):
         batch_time: float = 1 / 100,
     ) -> None:
         super().__init__(interpolation_delta, on_target_delta)
-
-        # Feedback coming FROM lvl2 output.tip_pos.
-        self.fk_feedback_input: BaseSub[MultiPose] = BaseSub()
-
-        # Target commands going TO lvl2 input.set_ik.
-        self.ik_target_output: BaseSub[MultiPose] = BaseSub()
-
-        # Backward-compatible aliases.
-        # These are client/API names, not lvl2-core names.
-        self.sensor_input: BaseSub[MultiPose] = self.fk_feedback_input
-        self.command_output: BaseSub[MultiPose] = self.ik_target_output
-
-        self._sensor_state: MultiPose = {}
-
-        self._iterator = self.fk_feedback_input.listen_reliable(queue_size=1000)
-
+        self.sensor_input: BaseSub[MultiPose] = BaseSub()
+        self.command_output: BaseSub[MultiPose] = BaseSub()
+        self._feedback_buffer = PoseBuffer()
+        self._iterator = self.sensor_input.listen_reliable(queue_size=1000)
         self._execute_event = asyncio.Event()
-
-        # Better than a shared Event for wait_ready:
-        # avoids races and supports multiple waiters.
         self._sensor_update_cond = asyncio.Condition()
-
         self.batch_time: float = batch_time
 
     async def run(self) -> None:
@@ -549,20 +511,23 @@ class AsyncIkSyncer(IkSyncer):
 
     def send_to_lvl2(self, ee_targets: MultiPose) -> None:
         """Emit IK targets for lvl2 input.set_ik."""
-        self.ik_target_output._input_data_asyncio(copy.deepcopy(ee_targets))
+        self.command_output._input_data_asyncio(copy.deepcopy(ee_targets))
 
     @property
     def sensor(self) -> MultiPose:
-        """Latest FK feedback from lvl2 output.tip_pos."""
-        return self._sensor_state
+        return self._feedback_buffer.accumulated
 
     async def _consume_task(self) -> None:
         async for multipose in self._iterator:
+            accepted = self._feedback_buffer.push(copy.deepcopy(multipose))
+
+            if len(accepted) == 0:
+                continue
+
             async with self._sensor_update_cond:
-                self._sensor_state.update(copy.deepcopy(multipose))
                 self._sensor_update_cond.notify_all()
 
-            self._execute_event.set()
+        self._execute_event.set()
 
     @afor.scoped
     async def _execute_task(self) -> None:

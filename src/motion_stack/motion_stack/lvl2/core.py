@@ -4,7 +4,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Optional, Self, TypeAlias
+from typing import TYPE_CHECKING, Final, Optional, Self, TypeAlias
 
 import asyncio_for_robotics as afor
 import dacite
@@ -33,6 +33,9 @@ from ..rtb_fix.patch import patch
 
 patch()
 
+if TYPE_CHECKING:
+    from motion_stack.lvl1.core import Lvl1Param
+
 logger = logging.getLogger(__name__)
 
 float_formatter = "{:.2f}".format
@@ -45,17 +48,10 @@ PoseBatch: TypeAlias = dict[int, Pose]
 class Lvl2Param:
     urdf: str = ""
     namespace: str = "ms"
-
     end_effector_name: None | str | int = "ALL"
     start_effector_name: None | str = None
-
     mvmt_update_rate: float = 100.0
     ignore_limits: bool = False
-    limit_margin: float = 0.0
-    speed_mode: bool = False
-
-    add_joint: list[str] = dataclasses.field(default_factory=list)
-
     angle_syncer_delta: float = np.deg2rad(5.0)
 
     joint_buffer: JState = dataclasses.field(
@@ -71,9 +67,7 @@ class Lvl2Param:
     batch_time: float = 0.001
     fk_publish_hz: float = 100.0
     monitor_timeout: float = 3.0
-
     reset_last_sent_sec: float = 0.5
-
     target_xyz_is_mm: bool = True
     fk_xyz_output_mm: bool = True
 
@@ -92,6 +86,57 @@ class Lvl2Param:
             pass
 
         return dacite.from_dict(cls, data, dacite.Config())
+
+    @classmethod
+    def from_lvl1_param(
+        cls,
+        lvl1: "Lvl1Param",
+        *,
+        end_effector_name: None | str | int | object = dataclasses.MISSING,
+        start_effector_name: None | str | object = dataclasses.MISSING,
+        angle_syncer_delta: float | None = None,
+        fk_publish_hz: float | None = None,
+        monitor_timeout: float | None = None,
+        reset_last_sent_sec: float | None = None,
+        target_xyz_is_mm: bool | None = None,
+        fk_xyz_output_mm: bool | None = None,
+    ) -> Self:
+        data = {
+            "urdf": lvl1.urdf,
+            "namespace": lvl1.namespace,
+            "end_effector_name": lvl1.end_effector_name,
+            "start_effector_name": lvl1.start_effector_name,
+            "mvmt_update_rate": lvl1.mvmt_update_rate,
+            "ignore_limits": lvl1.ignore_limits,
+            "joint_buffer": lvl1.joint_buffer,
+            "batch_time": lvl1.batch_time,
+        }
+
+        if end_effector_name is not dataclasses.MISSING:
+            data["end_effector_name"] = end_effector_name
+
+        if start_effector_name is not dataclasses.MISSING:
+            data["start_effector_name"] = start_effector_name
+
+        if angle_syncer_delta is not None:
+            data["angle_syncer_delta"] = angle_syncer_delta
+
+        if fk_publish_hz is not None:
+            data["fk_publish_hz"] = fk_publish_hz
+
+        if monitor_timeout is not None:
+            data["monitor_timeout"] = monitor_timeout
+
+        if reset_last_sent_sec is not None:
+            data["reset_last_sent_sec"] = reset_last_sent_sec
+
+        if target_xyz_is_mm is not None:
+            data["target_xyz_is_mm"] = target_xyz_is_mm
+
+        if fk_xyz_output_mm is not None:
+            data["fk_xyz_output_mm"] = fk_xyz_output_mm
+
+        return cls(**data)
 
 
 lvl2_default: Final[Lvl2Param] = Lvl2Param()
