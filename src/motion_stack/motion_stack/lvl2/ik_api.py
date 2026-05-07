@@ -527,7 +527,7 @@ class AsyncIkSyncer(IkSyncer):
             async with self._sensor_update_cond:
                 self._sensor_update_cond.notify_all()
 
-        self._execute_event.set()
+            self._execute_event.set()
 
     @afor.scoped
     async def _execute_task(self) -> None:
@@ -536,3 +536,24 @@ class AsyncIkSyncer(IkSyncer):
             await asyncio.sleep(self.batch_time)
             self.execute()
             self._execute_event.clear()
+
+
+def _order_dict2list(
+    order: list[LimbNumber],
+    data: MultiPose,
+) -> list[XyzQuat[Flo3, Quaternion]]:
+    return [XyzQuat(data[k].xyz, data[k].quat) for k in order]
+
+
+def _multipose_close(
+    track: Set[LimbNumber],
+    a: MultiPose,
+    b: MultiPose,
+    atol: XyzQuat[float, float],
+) -> bool:
+    for key in track:
+        close_enough = (a[key] - b[key]).close2zero(atol=atol)
+        if not close_enough:
+            return False
+
+    return True

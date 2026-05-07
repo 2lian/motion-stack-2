@@ -316,12 +316,12 @@ class IKCore:
         mvt_duration: Optional[Time] = None,
     ) -> tuple[Optional[NDArray], bool]:
         if mvt_duration is None:
-            delta_time = Time(sec=1 / self.PARAMS.mvmt_update_rate)
+            delta_time = Time.sn(sec=1 / self.PARAMS.mvmt_update_rate)
         else:
             delta_time = mvt_duration
 
         if compute_budget is None:
-            compute_budget = Time(sec=1 / self.PARAMS.mvmt_update_rate)
+            compute_budget = Time.sn(sec=1 / self.PARAMS.mvmt_update_rate)
 
         finish_by = self.now() + compute_budget
 
@@ -410,7 +410,7 @@ class IKCore:
             delta = real_angles - start
             dist = float(np.linalg.norm(delta, ord=np.inf))
 
-            _velocity = dist / delta_time.sec()
+            _velocity = dist / delta_time.sec
             del _velocity
 
             if sol_found:
@@ -444,7 +444,7 @@ class IKCore:
         delta_time = arrive_time - self.last_time_ik
         self.last_time_ik = arrive_time
 
-        ik_is_recent = delta_time < Time(sec=self.PARAMS.reset_last_sent_sec)
+        ik_is_recent = delta_time < Time.sn(sec=self.PARAMS.reset_last_sent_sec)
 
         if ik_is_recent:
             start = self.last_sent.copy()

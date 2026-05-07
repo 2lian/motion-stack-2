@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Optional, TypeAlias
+from typing import Optional, TypeAlias, Dict
 
 import numpy as np
 
@@ -11,14 +11,11 @@ from motion_stack.utils.time import Time
 logger = logging.getLogger(__name__)
 
 LimbNumber: TypeAlias = int
-MultiPose: TypeAlias = dict[LimbNumber, Pose]
+MultiPose: TypeAlias = Dict[LimbNumber, Pose]
 
 
 def impose_pose(onto: Optional[Pose], fromm: Optional[Pose]) -> Pose:
-    """Replace values of `onto` with values from `fromm`, unless fromm field is None.
-
-    Pose equivalent of impose_state().
-    """
+    """Replaces values of onto with values fromm, unless from is None."""
     if onto is None and fromm is None:
         return Pose(
             time=Time(0),
