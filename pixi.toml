@@ -52,6 +52,7 @@ ms_moonbot_zero = { path = "./src/ms_moonbot_zero/", editable = true }
 ms_pyzeros_bridge = { path = "./src/ms_pyzeros_bridge/", editable = true }
 moonbot_builder = { path = "./src/moonbot_builder/", editable = true }
 # hero_assets_py = { path = "./src/hero_assets_py/", editable = true }
+# gusta_assets_py = { path = "./src/gusta_assets_py/", editable = true }
 hero_assets_py = { git = "ssh://git@github.com/Space-Robotics-Laboratory/hero_assets_py.git" }
 # pyzeros = { path = "./../pyzeros2/", editable = true }
 pyzeros = { git = "ssh://git@github.com/2lian/pyzeros2.git" }

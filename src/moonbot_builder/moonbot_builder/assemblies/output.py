@@ -6,12 +6,10 @@ Change this file to output something else.
 The robot modules you wanna use need to be sourced before running, so hero_ros2 or moonbot_g package need to be sourced.
 """
 
-from moonbot_launcher.assemblies import alone
-
 from ..modules.gusta import MgArmV3
 from ..modules.hero import MhArmV1, MhArmV2, MhArmV3, MhWheelV1, MhWheelV2, MhCargo, MhCargoV2
 from ..urdf.base import wrap_in_robot
-from . import dragon, minimal, vehicule, cargo, cargo_v2
+from . import cargo, cargo_v2, chain, dragon, minimal, vehicle
 
 if __name__ == "__main__":
     # urdf = dragon.raw_urdf(
@@ -21,13 +19,13 @@ if __name__ == "__main__":
     #     back_wheel=MhWheelV2(2),
     # )
 
-    # urdf = vehicule.raw_urdf(
+    # urdf = vehicle.raw_urdf(
     #     front_wheel=MhWheelV2(1),
     #     bridge=MhArmV2(1),
     #     back_wheel=MhWheelV2(2),
     # )
 
-    # urdf = alone.raw_urdf(
+    # urdf = chain.raw_urdf(
     #     modules=[
     #         # MhArmV2(2),
     #         MgArmV3(2),

@@ -1,6 +1,5 @@
 """Assembles one arm or arms one after the other in a chain"""
 
-from copy import deepcopy
 from typing import List, Union
 
 import numpy as np
@@ -32,31 +31,29 @@ def raw_urdf(
         )
         if counter == 0:
             fix = Joint(f"fix{counter}", fixture, module.urdf_assembler.root, xyz=xyz)
-        module.down_from, module.up_to = 1, 1
-        module.start_effector = module.urdf_assembler.root
         urdf += fix.compile() + module.urdf_assembler.compile()
         fixture = module.urdf_assembler.leaf
+
+    modules[0].start_effector = base_link_name
+    modules[-1].end_effector = f"{modules[-1].joint_prefix}out_straight"
 
     return urdf
 
 
-def alone(
+def chain(
     arm: Union[RobotModule, List[RobotModule]],
     base_link_name: str = "base_link",
     xyz: np.ndarray = np.zeros(3),
 ) -> List[RobotModule]:
     """Assembles one arm or arms one after the other in a chain"""
     modules: List[RobotModule] = [arm] if not isinstance(arm, list) else arm
-    ik_module = deepcopy(modules[0])
 
     urdf = wrap_in_robot(raw_urdf(modules, base_link_name=base_link_name, xyz=xyz))
-    relays = []
 
-    ik_module.start_effector = modules[0].start_effector
-    # ik_module.end_effector = modules[-1].end_effector
-    ik_module.end_effector = f"{modules[-1].joint_prefix}out_straight"
-    ik_module.down_from, ik_module.up_to = 2, 2
+    return link_urdf_nodes(modules, urdf)
 
-    modules.append(ik_module)
 
-    return link_urdf_nodes(modules, urdf) + relays
+if __name__ == "__main__":
+    from moonbot_builder.modules.hero import MhArmV1, MhArmV2, MhArmV3
+
+    print(raw_urdf([MhArmV1(1), MhArmV2(2), MhArmV3(3)]))

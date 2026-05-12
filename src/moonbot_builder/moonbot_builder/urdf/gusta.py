@@ -1,10 +1,10 @@
 from typing import Any, Dict, List
 
-from .base import Arm, UrdfModule, Wheel
+from .base import Arm, UrdfModule
 
 
 class GustaRobot(UrdfModule):
-    ros_package = "moonbotg_4dof_rppr_ultraslim"
+    ros_package = "gusta_assets_py"
 
     def __init__(self, limb_number: int):
         super().__init__(limb_number)
@@ -20,6 +20,7 @@ class GustaRobot(UrdfModule):
         )
         return default
 
+
 class GustaArm(Arm, GustaRobot):
     def __init__(self, limb_number: int, reverse: bool = False):
         super().__init__(limb_number)
@@ -32,9 +33,8 @@ class GustaArm(Arm, GustaRobot):
         if reverse:
             self.joint_list.reverse()
 
+
 class GustaArmV3(GustaArm):
-    # package_relative_mesh_path = "meshes/moonbotg_v3/"
-    # jinja_file = "g_armv3.jinja.urdf"
     package_relative_mesh_path = "meshes/moonbotg_v3_updated/"
     jinja_file = "g_armv3_updated.jinja.urdf"
     mesh_extension = "STL"
@@ -44,7 +44,7 @@ class GustaArmV3(GustaArm):
         self, limb_number: int, reverse: bool = False, enable_gripper: bool = False
     ):
         super().__init__(limb_number, reverse=reverse)
-        self.name += f"v2-{limb_number}"
+        self.name += f"v3-{limb_number}"
         if enable_gripper:
             self._gripper_joint_type = "prismatic"
         else:
@@ -52,6 +52,5 @@ class GustaArmV3(GustaArm):
 
     def compile_kwarg(self) -> Dict[str, Any]:
         kwargs = super().compile_kwarg()
-        new = {f"grip_joint_type": self._gripper_joint_type}
-        kwargs.update(new)
+        kwargs.update({"grip_joint_type": self._gripper_joint_type})
         return kwargs

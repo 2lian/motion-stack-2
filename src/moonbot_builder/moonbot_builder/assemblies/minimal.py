@@ -53,3 +53,9 @@ def minimal(
     urdf = wrap_in_robot(raw_urdf(*modules, base_link_name=base_link_name))
 
     return link_urdf_nodes(modules, urdf)
+
+
+if __name__ == "__main__":
+    from moonbot_builder.modules.hero import MhArmV1, MhWheelV1
+
+    print(raw_urdf(MhArmV1(1), MhWheelV1(1)))
