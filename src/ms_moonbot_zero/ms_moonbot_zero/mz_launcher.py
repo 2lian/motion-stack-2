@@ -9,21 +9,30 @@ publishing real ROS 2 topics over zenoh. The URDF and parameters are
 serialized to JSON and passed on the command line -- similar to how
 ros2 launch passes parameters to nodes.
 
+Lvl2 IK is also launched per leg. Each lvl2 process subscribes to the
+corresponding leg's joint_read and set_ik topics, then publishes joint_set
+and tip_pos in the same namespace.
+
 Run:
     pixi run mz_launcher
     pixi run mz_launcher --viz
 
-Outputs: 4 subprocesses, each publishing on their own namespace
-         (leg1/joint_read, leg2/joint_read, etc.)
+Outputs: 8 subprocesses:
+         leg1 lvl1 + leg1 lvl2
+         leg2 lvl1 + leg2 lvl2
+         leg3 lvl1 + leg3 lvl2
+         leg4 lvl1 + leg4 lvl2
 """
 
 import argparse
 import sys
 from subprocess import Popen, TimeoutExpired
 
+import numpy as np
 from motion_stack.lvl1.core import Lvl1Param
-from ms_moonbot_zero import load_moonbot_zero_urdf
+from motion_stack.lvl2.core import Lvl2Param
 
+from ms_moonbot_zero import load_moonbot_zero_urdf
 
 # Each leg has its own ROS namespace and end effector.
 # The namespace isolates topics: leg1/joint_read, leg2/joint_read, etc.
@@ -35,7 +44,7 @@ LEGS = [
 ]
 
 
-def build_commands(params_list: list[Lvl1Param]) -> list[list[str]]:
+def build_lvl1_commands(params_list: list[Lvl1Param]) -> list[list[str]]:
     """Convert a list of Lvl1Param into CLI commands for lvl1_exec.
 
     Each command is equivalent to running:
@@ -58,6 +67,28 @@ def build_commands(params_list: list[Lvl1Param]) -> list[list[str]]:
             "ms_pyzeros_bridge.lvl1_exec",
             # The node reads all its config (URDF, namespace, etc.) from this JSON
             "--ms-lvl1-json",
+            params.to_json(),
+        ]
+        cmds.append(cmd)
+    return cmds
+
+
+def build_lvl2_commands(params_list: list[Lvl2Param]) -> list[list[str]]:
+    """Convert a list of Lvl2Param into CLI commands for lvl2_exec.
+
+    Each command is equivalent to running:
+        python -m ms_pyzeros_bridge.lvl2_exec --ms-lvl2-json '{"urdf": "...", ...}'
+
+    lvl2_exec runs IKCore for one leg. It subscribes to joint_read and set_ik,
+    and publishes joint_set and tip_pos in its namespace.
+    """
+    cmds = []
+    for params in params_list:
+        cmd = [
+            sys.executable,
+            "-m",
+            "ms_pyzeros_bridge.lvl2.lvl2_exec",
+            "--ms-lvl2-json",
             params.to_json(),
         ]
         cmds.append(cmd)
@@ -87,7 +118,9 @@ def run_all(cmds: list[list[str]]) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch Moonbot Zero (4 legs)")
-    parser.add_argument("--viz", action="store_true", help="Launch rerun visualizer only")
+    parser.add_argument(
+        "--viz", action="store_true", help="Launch rerun visualizer only"
+    )
     args = parser.parse_args()
 
     # Compile the Moonbot Zero URDF from its jinja template.
@@ -99,7 +132,7 @@ if __name__ == "__main__":
     # gets a different namespace and end effector so the motion stack knows
     # which kinematic chain to manage.
     # This is like setting <param> in a ROS launch file.
-    params_list = [
+    lvl1_params_list = [
         Lvl1Param(
             urdf=urdf,
             namespace=leg["namespace"],
@@ -109,16 +142,29 @@ if __name__ == "__main__":
         for leg in LEGS
     ]
 
+    lvl2_params_list = [
+        Lvl2Param.from_lvl1_param(
+            lvl1_params,
+        )
+        for lvl1_params in lvl1_params_list
+    ]
+
     if args.viz:
         # Launch the rerun visualizer only (no robot processes).
         # Pass the URDF so rerun can render the 3D model.
-        run_all(
-            [[sys.executable, "-m", "ms_pyzeros_bridge.rerun_viz", "--urdf", urdf]]
-        )
+        run_all([[sys.executable, "-m", "ms_pyzeros_bridge.rerun_viz", "--urdf", urdf]])
     else:
-        # Build the CLI commands and spawn one process per leg.
-        cmds = build_commands(params_list)
-        print(f"Launching {len(cmds)} leg process(es)...")
-        for p in params_list:
+        # Build the CLI commands and spawn one lvl1 + one lvl2 process per leg.
+        lvl1_cmds = build_lvl1_commands(lvl1_params_list)
+        lvl2_cmds = build_lvl2_commands(lvl2_params_list)
+
+        cmds = []
+        for lvl1_cmd, lvl2_cmd in zip(lvl1_cmds, lvl2_cmds):
+            cmds.append(lvl1_cmd)
+            cmds.append(lvl2_cmd)
+
+        print(f"Launching {len(cmds)} process(es)...")
+        for p in lvl1_params_list:
             print(f"  Namespace: {p.namespace} | End_effector: {p.end_effector_name}")
+
         run_all(cmds)

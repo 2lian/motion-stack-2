@@ -38,8 +38,6 @@ async def run_leg(params: Lvl1Param, rerun: bool = False):
     scope.task_group.create_task(core.run())
     scope.task_group.create_task(lo.run())
 
-    params.urdf = ""
-
     await asyncio.Future()  # run until cancelled
 
 

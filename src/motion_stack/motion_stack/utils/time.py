@@ -36,10 +36,9 @@ class Time:
         return self.nano / NANOSEC
 
     def to_parts(self):
-        sec = int(self.nano)//int(1e9)
-        nano = int(self.nano)%int(1e9)
+        sec = int(self.nano) // int(1e9)
+        nano = int(self.nano) % int(1e9)
         return sec, nano
-
 
     # --- arithmetic ---
 
@@ -107,3 +106,26 @@ class Time:
         if isinstance(other, Time):
             return self.nano <= other.nano
         return NotImplemented
+
+    def __str__(self) -> str:
+        sec, nano = self.to_parts()
+        return f"{sec}.{nano:09d}s"
+
+    def __repr__(self) -> str:
+        return f"Time(nano={self.nano})"
+
+    def __format__(self, fmt: str) -> str:
+        if fmt == "_":
+            sec, nano = self.to_parts()
+            return f"{sec}_{nano:09d}"
+
+        if fmt in {"", "s"}:
+            return str(self)
+
+        if fmt == "ns":
+            return str(self.nano)
+
+        if fmt == "sec":
+            return str(self.sec)
+
+        return format(self.sec, fmt)
