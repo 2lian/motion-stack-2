@@ -1,5 +1,5 @@
 import operator
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union, overload
 
 import numpy as np
@@ -130,6 +130,15 @@ def shape_states(states: List[JState], mapping: StateMap):
             shaper(s)
 
 
+def copy_states(states: MultiJState) -> List[JState]:
+    if isinstance(states, dict):
+        return [js.copy() for js in states.values()]
+    elif isinstance(states, JState):
+        return [states.copy()]
+    else:
+        return [js.copy() for js in states]
+
+
 """Apply any function to the input/output of the lvl1 joint core.
 
 This allows for static offset, gain and more. So if your URDF is offsetted from the real robot, this is one solution. It can also change names of joints right before publication/reception, in case you are unhappy with your urdf joint names.
@@ -200,27 +209,21 @@ class StateRemapper:
         shape_states(states, self.unstate_map)
 
     def map(self, states: MultiJState) -> Dict[str, JState]:
-        """Apllies the mapping used when sending"""
-        if isinstance(states, dict):
-            states = list(states.values())
-        elif isinstance(states, JState):
-            states = [states]
-        else:
-            pass
+        """Applies the mapping used when sending"""
+        states = copy_states(states)
+
         self._shapify(states)
         self._namify(states)
+
         return multi_to_js_dict(states)
 
     def unmap(self, states: MultiJState) -> Dict[str, JState]:
-        """Apllies the mapping when receiving"""
-        if isinstance(states, dict):
-            states = list(states.values())
-        elif isinstance(states, JState):
-            states = [states]
-        else:
-            pass
+        """Applies the mapping when receiving"""
+        states = copy_states(states)
+
         self._unnamify(states)
         self._unshapify(states)
+
         return multi_to_js_dict(states)
 
     def simplify(self, names_to_keep: Iterable[str]) -> "StateRemapper":
