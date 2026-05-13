@@ -81,7 +81,6 @@ Each leg publishes on its own namespace (`leg1/joint_read`, `leg2/joint_read`, e
 ### API client ([`api_demo.py`](src/ms_moonbot_zero/ms_moonbot_zero/api_demo.py))
 
 Connects to a running robot and moves all joints via `AsyncJointSyncer`.
-This is what application code looks like.
 
 ```bash
 # terminal 1: start the robot
