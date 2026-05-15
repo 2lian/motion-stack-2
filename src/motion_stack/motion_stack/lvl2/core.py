@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Optional, Self, TypeAlias
 
+from ..rtb_fix.patch import patch
+patch()
+
 import asyncio_for_robotics as afor
 import dacite
 import matplotlib
@@ -28,10 +31,6 @@ from motion_stack.utils.pose import Pose
 from motion_stack.utils.printing import list_cyanize
 from motion_stack.utils.robot_parsing import load_set_urdf_raw, make_ee
 from motion_stack.utils.time import Time
-
-from ..rtb_fix.patch import patch
-
-patch()
 
 if TYPE_CHECKING:
     from motion_stack.lvl1.core import Lvl1Param
